@@ -29,6 +29,25 @@ enum NoteTag: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+// Verdichtete Kennzahlen für das Vitalitäts-Cockpit
+struct VitalitySnapshot: Hashable {
+    var vitalityScore: Int
+    var balanceScore: Int
+    var recoveryPhase: String
+    var summary: String
+    var highlight: String
+    var trendDescription: String
+
+    static let empty = VitalitySnapshot(
+        vitalityScore: 0,
+        balanceScore: 0,
+        recoveryPhase: "Nicht verbunden",
+        summary: "Verbinde ReLife, um deinen Vitalitätsstatus zu sehen.",
+        highlight: "—",
+        trendDescription: "Keine Daten verfügbar."
+    )
+}
+
 // Steuert welche Kennzahl in Diagrammen angezeigt wird
 enum MetricType: String, CaseIterable, Identifiable {
     case all = "Alle"
@@ -78,6 +97,7 @@ final class AppState: ObservableObject {
     @Published var isConnected: Bool = false
     @Published var samples: [Sample] = []
     @Published var notes: [Note] = []
+    @Published var vitality: VitalitySnapshot = .empty
 
     @Published var temperatureUnit: TemperatureUnit = .celsius
     @Published var colorSchemeOption: ColorSchemeOption = .system
@@ -127,6 +147,7 @@ final class AppState: ObservableObject {
             t = t.addingTimeInterval(interval)
         }
         samples = data
+        refreshWellnessInsights()
     }
 
     // Löscht aktuelle Messwerte und generiert neue
@@ -140,6 +161,7 @@ final class AppState: ObservableObject {
         samples.removeAll()
         notes.removeAll()
         isConnected = false
+        vitality = .empty
     }
 
     // MARK: - Notizen
@@ -151,6 +173,21 @@ final class AppState: ObservableObject {
     // Komfortfunktion für Stress-Markierungen
     func addStressMarker() {
         addNote(tag: .stress, text: "Stress-Marke gesetzt")
+    }
+
+    // MARK: - Vitalitäts-Analyse
+    func refreshWellnessInsights(reference date: Date = Date()) {
+        guard let snapshot = calculateVitalitySnapshot(reference: date) else {
+            vitality = .empty
+            return
+        }
+
+        vitality = snapshot
+    }
+
+    // Liefert eine Momentaufnahme, ohne den State zu verändern (z. B. für Analysen)
+    func snapshot(for reference: Date = Date()) -> VitalitySnapshot {
+        calculateVitalitySnapshot(reference: reference) ?? .empty
     }
 }
 
@@ -169,10 +206,104 @@ extension Array where Element == Sample {
     }
 }
 
+extension Array where Element == Double {
+    func average() -> Double {
+        guard !isEmpty else { return 0 }
+        return reduce(0, +) / Double(count)
+    }
+}
+
 // MARK: - Markenfarben
 extension Color {
     // Einheitliche Farben aus dem Asset-Katalog
     static var rlPrimary: Color { Color("BrandPrimary") }
     static var rlSecondary: Color { Color("BrandSecondary") }
     static var rlCardBG: Color { Color("CardBG") }
+}
+
+// MARK: - Mathematik
+private func normalize(_ value: Double, min: Double, max: Double) -> Double {
+    guard max > min else { return 0 }
+    return ((value - min) / (max - min)).clamped(to: 0...1)
+}
+
+private extension Double {
+    func clamped(to range: ClosedRange<Double>) -> Double {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+
+private extension AppState {
+    // Berechnet Vitalitätskennzahlen für einen Zeitpunkt
+    func calculateVitalitySnapshot(reference date: Date) -> VitalitySnapshot? {
+        let last6h = samples.inLast(hours: 6, from: date)
+        let last24h = samples.inLast(hours: 24, from: date)
+
+        guard !last6h.isEmpty, !last24h.isEmpty else {
+            return nil
+        }
+
+        let avgHr6 = last6h.map { Double($0.hr) }.average()
+        let avgHr24 = last24h.map { Double($0.hr) }.average()
+        let avgSpo2 = last24h.map { Double($0.spo2) }.average()
+        let avgTemp = last24h.map { $0.skinTempC }.average()
+        let avgEDA = last6h.map { $0.edaMicroSiemens }.average()
+
+        let hrDelta = avgHr6 - avgHr24
+        let normalizedSpo2 = normalize(avgSpo2, min: 92, max: 100)
+        let normalizedEDA = 1.0 - normalize(avgEDA, min: 0.8, max: 8.0)
+        let normalizedTemp = 1.0 - abs(avgTemp - 33.5) / 3.5
+
+        let rawVitality = (normalizedSpo2 * 45)
+            + (normalizedEDA * 25)
+            + (normalizedTemp * 20)
+            + ((-hrDelta).clamped(to: -12...10) / 10 * 10)
+        let finalVitality = Int(rawVitality.clamped(to: 25...99))
+
+        let calmSamples = last24h.filter { $0.edaMicroSiemens < 3.0 }
+        let balanceRatio = Double(calmSamples.count) / Double(max(last24h.count, 1))
+        let balanceScore = Int((balanceRatio * 100).clamped(to: 25...95))
+
+        let recoveryPhase: String
+        if finalVitality >= 80 {
+            recoveryPhase = "Regenerative Phase"
+        } else if finalVitality >= 60 {
+            recoveryPhase = "Kalibrieren"
+        } else {
+            recoveryPhase = "Reboot nötig"
+        }
+
+        let highlight: String
+        if hrDelta <= -5 {
+            highlight = "Dein Ruhepuls sinkt – Zeichen guter Regeneration."
+        } else if avgEDA > 5 {
+            highlight = "Leicht erhöhte Leitwerte – Stress-Signale begegnen."
+        } else if avgSpo2 >= 98 {
+            highlight = "Stabile Sauerstoffsättigung."
+        } else {
+            highlight = "Achte auf ruhige Atemphasen."
+        }
+
+        let trend: String
+        if hrDelta < -3 {
+            trend = "Trend: Puls entspannt sich im Vergleich zu den letzten 24 Stunden."
+        } else if hrDelta > 3 {
+            trend = "Trend: Puls ist aktuell höher – plane Micro-Breaks ein."
+        } else {
+            trend = "Trend: Solide Stabilität, halte deinen Flow."
+        }
+
+        let summary = """
+        Dein ReLife Score verdichtet Puls, Sauerstoff, Hauttemp. & Leitwert in einen punktgenauen Zustandssnapshot.
+        """
+
+        return VitalitySnapshot(
+            vitalityScore: finalVitality,
+            balanceScore: balanceScore,
+            recoveryPhase: recoveryPhase,
+            summary: summary,
+            highlight: highlight,
+            trendDescription: trend
+        )
+    }
 }

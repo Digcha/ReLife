@@ -19,8 +19,15 @@ struct TodayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("ReLife – Heute")
-                    .font(Font.largeTitle.bold())
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("ReLife – Heute")
+                        .font(Font.largeTitle.bold())
+                    Text(app.vitality.recoveryPhase)
+                        .font(Font.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                VitalityHero(snapshot: app.vitality)
 
                 // Hinweis falls Nutzer noch nicht verbunden ist
                 if !app.isConnected {
@@ -41,7 +48,7 @@ struct TodayView: View {
                 // Kacheln mit aktuellen Kennzahlen
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     MetricCardView(
-                        title: "Puls",
+                        title: "Puls aktuell",
                         value: latest != nil ? "\(latest!.hr)" : "–",
                         unit: "bpm",
                         icon: "heart.fill",
@@ -81,6 +88,18 @@ struct TodayView: View {
                     )
                     .onTapGesture {}
                 }
+
+                // Vitalitäts-Hinweise
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("ReLife Insight")
+                        .font(Font.title2.bold())
+                    InsightRow(text: app.vitality.summary, icon: "sparkles")
+                    InsightRow(text: app.vitality.highlight, icon: "leaf.circle")
+                    InsightRow(text: app.vitality.trendDescription, icon: "chart.line.uptrend.xyaxis")
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                 // Steuerung für das Zeitfenster der Charts
                 Picker("Zeitraum", selection: $timeWindow) {
@@ -126,6 +145,125 @@ struct TodayView: View {
                 noteText = ""
                 noteTag = nil
             }
+        }
+        .onChange(of: app.samples) { _ in
+            app.refreshWellnessInsights()
+        }
+    }
+}
+
+// Hero-Kachel verdichtet den ReLife-Score visuell in einer Glasoptik
+private struct VitalityHero: View {
+    var snapshot: VitalitySnapshot
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.ultraThinMaterial.opacity(0.75))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(gradientBorder, lineWidth: 1.2)
+                        .blendMode(.softLight)
+                )
+                .background(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(heroGradient)
+                        .scaleEffect(1.03)
+                        .blur(radius: 24)
+                )
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Vitality Score")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("\(snapshot.vitalityScore)")
+                                .font(.system(size: 58, weight: .bold, design: .rounded))
+                                .foregroundStyle(scoreGradient)
+                            Text("von 100")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Label("\(snapshot.balanceScore)", systemImage: "circle.circle")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Balance-Level")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack {
+                    Label(snapshot.recoveryPhase, systemImage: "arrow.triangle.2.circlepath")
+                        .font(.title3.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "leaf.fill")
+                        .symbolVariant(.fill)
+                        .foregroundStyle(Color.rlPrimary)
+                        .font(.title2)
+                }
+            }
+            .padding(24)
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var heroGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.black.opacity(0.75),
+                Color.rlPrimary.opacity(0.68),
+                Color.black.opacity(0.94)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var scoreGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.white,
+                Color.rlPrimary.opacity(0.6)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var gradientBorder: AngularGradient {
+        AngularGradient(
+            colors: [
+                .white.opacity(0.35),
+                Color.rlPrimary.opacity(0.45),
+                .white.opacity(0.15),
+                .black.opacity(0.35),
+                Color.rlSecondary.opacity(0.3)
+            ],
+            center: .center
+        )
+    }
+}
+
+// Zeile mit ikonischem Hinweistext
+private struct InsightRow: View {
+    var text: String
+    var icon: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(Color.rlPrimary)
+            Text(text)
+                .font(.body)
+            Spacer()
         }
     }
 }

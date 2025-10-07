@@ -3,6 +3,7 @@ Projektübersicht – ReLife (SwiftUI iOS Demo)
 Kurzbeschreibung
 - Demo‑App „ReLife“ auf Basis von SwiftUI. Lädt beim „Verbinden“ plausible, zufällig generierte Gesundheitsdaten (letzte 10 Tage) rein lokal (keine echten Verbindungen).
 - Fokus: Visualisierung (Karten, Linien‑Charts), Notizen/Tags, CSV‑Export, Grundeinstellungen (Darstellung, Einheiten, Datensteuerung).
+- Vitalitäts-Refresh 2025: Neuer ReLife Score (Vitality/Balance) und weiterentwickelte Liquid-Glass-Ästhetik für das Dashboard.
 
 Wichtigste Technologien
 - Swift / SwiftUI: gesamtes UI, Navigation über `NavigationStack`, Tabs via `TabView`.
@@ -20,20 +21,25 @@ Projektstruktur (Auszug)
 - ReLife/ReLifeApp.swift: App‑Entry, hängt `AppState` als Environment an und setzt Farbschema.
 - ReLife/AppState.swift: Zentrales Modell & State.
   - Modelle: `Sample` (timestamp, hr, spo2, skinTempC, edaMicroSiemens), `Note` (date, tag, text).
+  - Neu: `VitalitySnapshot` bündelt ReLife Score, Balance-Level, Phase & narrative Insights.
   - Enums: `NoteTag`, `MetricType` (all, hr, spo2, skinTemp, eda), `TimeWindow` (6h/12h/24h), `TemperatureUnit` (°C/°F), `ColorSchemeOption` (System/Hell/Dunkel).
   - Aktionen: `connectAndLoadDemo()`, `generateLast10Days()`, `reloadDemoData()`, `clearAllData()`, `addNote(...)`, `addStressMarker()`.
+  - Vitalitäts-Analyse: `refreshWellnessInsights()` ermittelt Score, Balance & Trendtexte; `snapshot(for:)` erlaubt zeitliche Auswertungen.
   - Array‑Helper: Filter nach Zeitraum bzw. „heute“.
   - Farb‑Helper: `Color.rlPrimary/rlSecondary/rlCardBG` mappen auf Asset‑Farben.
 - ReLife/ContentView.swift: Schaltet zwischen `ConnectScreen` und Tab‑UI (Heute, Trends, Protokoll, Einstellungen).
 
 Views – Hauptscreens (ReLife/Views/Tabs)
 - TodayView.swift:
-  - Überblick „Heute“: vier Kennzahlen‑Karten (Puls, SpO2, Hauttemp., Hautleitwert) mit Mini‑Sparklines.
+  - Überblick „Heute“: Vitality-Hero mit Liquid-Glass-Optik, Score & Balance-Phase plus narrative Insights.
+  - Danach Kennzahlen‑Karten (Puls, SpO₂, Hauttemp., Hautleitwert) mit Mini‑Sparklines.
   - Zeitfenster‑Picker (6/12/24h) für darunterliegende Charts.
   - 4 Charts (je Metrik) auf Basis von `MetricChartView`.
   - Schnellaktionen: Stress‑Marker setzen, Notiz hinzufügen (Sheet).
 - TrendsView.swift:
-  - Metrik‑Picker (Alle/Einzelmetriken), einfache Statistik (Min/Ø/Max) und 24h‑Charts.
+  - Vitality Timeline fasst die letzten 7 Tage in Chart (Area/Line) zusammen, inkl. Balance-Scores.
+  - EDA-Zonenkarte (Calm/Focus/Charged) visualisiert Hautleitwertverteilung + Empfehlungstext.
+  - Metrik‑Picker (Alle/Einzelmetriken), einfache Statistik (Min/Ø/Max) und 24h‑Charts bleiben erhalten.
   - CSV‑Export aller Samples via Teilen‑Sheet (`ActivityView`).
 - LogView.swift:
   - Notizliste mit Tag‑Filter (Segmented Picker), Hinzufügen/Löschen von Notizen.
@@ -65,6 +71,7 @@ Design & UX
 - Farben über Asset‑Katalog und `Color`‑Extension.
 - System‑Icons (SF Symbols) für Konsistenz.
 - Schatten/Ecken für Kartenoptik, einfache Accessibility‑Labels.
+- Vitality-Hero nutzt `Color.rlPrimary`, Glaslayer & Gradienten für „Liquid Energy“.
 - Haptik‑Feedback für wichtige Aktionen (iOS).
 
 Build/Runtime‑Anforderungen
@@ -90,4 +97,3 @@ Fragen/Erweiterungen (Ideen)
 - Mehr Statistiken (z. B. Tages‑/Wochen‑Aggregationen) und Vergleich mit Baselines.
 - Lokalisierung strukturieren (Localizable.strings) und Englisch hinzufügen.
 - Tests ausbauen (UI‑Flows, Generierung plausibler Daten, CSV‑Validierung).
-

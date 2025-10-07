@@ -29,6 +29,61 @@ struct TrendsView: View {
         return (minV, avgV, maxV)
     }
 
+    // Aggregiert Vitality-Snapshots für die letzten sieben Tage
+    private var dailyVitalities: [DailyVitality] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        var items: [DailyVitality] = []
+        for offset in (0..<7).reversed() {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today),
+                  let reference = cal.date(bySettingHour: 23, minute: 30, second: 0, of: day) else { continue }
+            let snapshot = app.snapshot(for: reference)
+            if snapshot == .empty { continue }
+            items.append(DailyVitality(date: day, vitalityScore: snapshot.vitalityScore, balanceScore: snapshot.balanceScore))
+        }
+        return items
+    }
+
+    // Aufteilung der letzten 24 Stunden nach Leitwert-Zonen
+    private var electroDermalDistribution: [EDAZone] {
+        let recent = app.samples.inLast(hours: 24)
+        guard !recent.isEmpty else { return [] }
+        let slice = recent.reduce(into: [EDAZone.Kind: Int]()) { partial, sample in
+            let kind: EDAZone.Kind
+            switch sample.edaMicroSiemens {
+            case ..<2.2: kind = .calm
+            case 2.2..<4.5: kind = .focus
+            default: kind = .charged
+            }
+            partial[kind, default: 0] += 1
+        }
+        let total = Double(recent.count)
+        return EDAZone.Kind.allCases.map { kind in
+            let count = Double(slice[kind, default: 0])
+            return EDAZone(kind: kind, ratio: count / total)
+        }
+    }
+
+    private var edaSummary: String {
+        guard let focusZone = electroDermalDistribution.first(where: { $0.kind == .focus }) else {
+            return "Noch keine Verteilung vorhanden."
+        }
+        let focusPercent = Int(focusZone.ratio * 100)
+        if focusPercent > 42 {
+            return "Starker Fokus-Window – nimm Micro-Pausen für Balance."
+        }
+        if focusPercent < 25 {
+            return "Sehr ruhige Leitwerte – achte auf dynamische Aktivierung."
+        }
+        return "Solide Balance zwischen Ruhe und Fokus."
+    }
+
+    private let dateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "dd.MM."
+        return df
+    }()
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -41,6 +96,29 @@ struct TrendsView: View {
                         Label("CSV exportieren", systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(.bordered)
+                }
+
+                // Verlauf des Vitalitätsscores visualisieren
+                if !dailyVitalities.isEmpty {
+                    VitalityTimeline(dailyVitalities: dailyVitalities, formatter: dateFormatter)
+                }
+
+                if !electroDermalDistribution.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("EDA-Zonen (24h)")
+                            .font(.title3.bold())
+                        Text(edaSummary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 12) {
+                            ForEach(electroDermalDistribution) { zone in
+                                ZoneCard(zone: zone)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color.rlCardBG.opacity(0.85))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
 
                 // Nutzer entscheidet, welche Kennzahl gezeigt wird
@@ -90,5 +168,144 @@ struct TrendsView: View {
         }
         csvText = out
         showShare = true
+    }
+}
+
+// MARK: - Zusätzliche Strukturen für Vitalität
+private struct DailyVitality: Identifiable {
+    let id = UUID()
+    let date: Date
+    let vitalityScore: Int
+    let balanceScore: Int
+}
+
+private struct VitalityTimeline: View {
+    var dailyVitalities: [DailyVitality]
+    var formatter: DateFormatter
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("ReLife Score Verlauf")
+                .font(.title3.bold())
+            Text("Balance & Vitalität der letzten 7 Tage.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Chart {
+                ForEach(dailyVitalities) { item in
+                    AreaMark(
+                        x: .value("Tag", item.date),
+                        y: .value("Score", item.vitalityScore)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.rlPrimary.opacity(0.55), Color.clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    LineMark(
+                        x: .value("Tag", item.date),
+                        y: .value("Score", item.vitalityScore)
+                    )
+                    .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .foregroundStyle(Color.rlPrimary)
+
+                    PointMark(
+                        x: .value("Tag", item.date),
+                        y: .value("Score", item.vitalityScore)
+                    )
+                    .symbolSize(70)
+                    .foregroundStyle(Color.white)
+                    .annotation(position: .top) {
+                        VStack(spacing: 2) {
+                            Text("\(item.vitalityScore)")
+                                .font(.caption.bold())
+                                .foregroundStyle(Color.rlPrimary)
+                            Text(formatter.string(from: item.date))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .frame(height: 220)
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day)) { value in
+                    AxisGridLine()
+                    if let date = value.as(Date.self) {
+                        AxisValueLabel(formatter.string(from: date))
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { value in
+                    AxisGridLine()
+                    if let score = value.as(Double.self) {
+                        AxisValueLabel("\(Int(score))")
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+private struct EDAZone: Identifiable {
+    enum Kind: CaseIterable, Identifiable {
+        case calm
+        case focus
+        case charged
+        var id: Self { self }
+
+        var title: String {
+            switch self {
+            case .calm: return "Calm"
+            case .focus: return "Focus"
+            case .charged: return "Charged"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .calm: return "water.waves"
+            case .focus: return "scope"
+            case .charged: return "bolt.fill"
+            }
+        }
+
+        var tint: Color {
+            switch self {
+            case .calm: return Color.mint
+            case .focus: return Color.rlPrimary
+            case .charged: return Color.pink
+            }
+        }
+    }
+
+    let id = UUID()
+    let kind: Kind
+    let ratio: Double
+}
+
+private struct ZoneCard: View {
+    var zone: EDAZone
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: zone.kind.icon)
+                .font(.title2)
+                .foregroundStyle(zone.kind.tint)
+            Text(zone.kind.title)
+                .font(.headline)
+            Text("\(Int(zone.ratio * 100)) %")
+                .font(.title3.bold())
+                .foregroundStyle(zone.kind.tint)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
