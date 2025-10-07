@@ -1,13 +1,14 @@
 //
-//  PlayGroundUITestsLaunchTests.swift
-//  PlayGroundUITests
+//  ReLifeUITestsLaunchTests.swift
+//  ReLifeUITests
 //
-//  Created by Dimitar Chalakov on 14.09.25.
+//  Erstellt von Dimitar Chalakov am 14.09.25.
 //
 
 import XCTest
 
-final class PlayGroundUITestsLaunchTests: XCTestCase {
+// Misst die Startzeit und erstellt einen Screenshot zum Launch
+final class ReLifeUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
@@ -22,8 +23,7 @@ final class PlayGroundUITestsLaunchTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        // Hier könnten weitere Schritte vor dem Screenshot ergänzt werden.
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"

@@ -12,37 +12,37 @@
 			containerPortal = 6B8E392D2E7735980081124B /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 6B8E39342E7735980081124B;
-			remoteInfo = PlayGround;
+			remoteInfo = ReLife;
 		};
 		6B8E394D2E7735990081124B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6B8E392D2E7735980081124B /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 6B8E39342E7735980081124B;
-			remoteInfo = PlayGround;
+			remoteInfo = ReLife;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		6B8E39352E7735980081124B /* PlayGround.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlayGround.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6B8E39422E7735990081124B /* PlayGroundTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlayGroundTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		6B8E394C2E7735990081124B /* PlayGroundUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlayGroundUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B8E39352E7735980081124B /* ReLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B8E39422E7735990081124B /* ReLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B8E394C2E7735990081124B /* ReLifeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReLifeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		6B8E39372E7735980081124B /* PlayGround */ = {
+		6B8E39372E7735980081124B /* ReLife */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PlayGround;
+			path = ReLife;
 			sourceTree = "<group>";
 		};
-		6B8E39452E7735990081124B /* PlayGroundTests */ = {
+		6B8E39452E7735990081124B /* ReLifeTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PlayGroundTests;
+			path = ReLifeTests;
 			sourceTree = "<group>";
 		};
-		6B8E394F2E7735990081124B /* PlayGroundUITests */ = {
+		6B8E394F2E7735990081124B /* ReLifeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PlayGroundUITests;
+			path = ReLifeUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,9 +75,9 @@
 		6B8E392C2E7735980081124B = {
 			isa = PBXGroup;
 			children = (
-				6B8E39372E7735980081124B /* PlayGround */,
-				6B8E39452E7735990081124B /* PlayGroundTests */,
-				6B8E394F2E7735990081124B /* PlayGroundUITests */,
+				6B8E39372E7735980081124B /* ReLife */,
+				6B8E39452E7735990081124B /* ReLifeTests */,
+				6B8E394F2E7735990081124B /* ReLifeUITests */,
 				6B8E39362E7735980081124B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -85,9 +85,9 @@
 		6B8E39362E7735980081124B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6B8E39352E7735980081124B /* PlayGround.app */,
-				6B8E39422E7735990081124B /* PlayGroundTests.xctest */,
-				6B8E394C2E7735990081124B /* PlayGroundUITests.xctest */,
+				6B8E39352E7735980081124B /* ReLife.app */,
+				6B8E39422E7735990081124B /* ReLifeTests.xctest */,
+				6B8E394C2E7735990081124B /* ReLifeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6B8E39342E7735980081124B /* PlayGround */ = {
+		6B8E39342E7735980081124B /* ReLife */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6B8E39562E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGround" */;
+			buildConfigurationList = 6B8E39562E7735990081124B /* Build configuration list for PBXNativeTarget "ReLife" */;
 			buildPhases = (
 				6B8E39312E7735980081124B /* Sources */,
 				6B8E39322E7735980081124B /* Frameworks */,
@@ -108,18 +108,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				6B8E39372E7735980081124B /* PlayGround */,
+				6B8E39372E7735980081124B /* ReLife */,
 			);
-			name = PlayGround;
+			name = ReLife;
 			packageProductDependencies = (
 			);
-			productName = PlayGround;
-			productReference = 6B8E39352E7735980081124B /* PlayGround.app */;
+			productName = ReLife;
+			productReference = 6B8E39352E7735980081124B /* ReLife.app */;
 			productType = "com.apple.product-type.application";
 		};
-		6B8E39412E7735990081124B /* PlayGroundTests */ = {
+		6B8E39412E7735990081124B /* ReLifeTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6B8E39592E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGroundTests" */;
+			buildConfigurationList = 6B8E39592E7735990081124B /* Build configuration list for PBXNativeTarget "ReLifeTests" */;
 			buildPhases = (
 				6B8E393E2E7735990081124B /* Sources */,
 				6B8E393F2E7735990081124B /* Frameworks */,
@@ -131,18 +131,18 @@
 				6B8E39442E7735990081124B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				6B8E39452E7735990081124B /* PlayGroundTests */,
+				6B8E39452E7735990081124B /* ReLifeTests */,
 			);
-			name = PlayGroundTests;
+			name = ReLifeTests;
 			packageProductDependencies = (
 			);
-			productName = PlayGroundTests;
-			productReference = 6B8E39422E7735990081124B /* PlayGroundTests.xctest */;
+			productName = ReLifeTests;
+			productReference = 6B8E39422E7735990081124B /* ReLifeTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		6B8E394B2E7735990081124B /* PlayGroundUITests */ = {
+		6B8E394B2E7735990081124B /* ReLifeUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6B8E395C2E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGroundUITests" */;
+			buildConfigurationList = 6B8E395C2E7735990081124B /* Build configuration list for PBXNativeTarget "ReLifeUITests" */;
 			buildPhases = (
 				6B8E39482E7735990081124B /* Sources */,
 				6B8E39492E7735990081124B /* Frameworks */,
@@ -154,13 +154,13 @@
 				6B8E394E2E7735990081124B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				6B8E394F2E7735990081124B /* PlayGroundUITests */,
+				6B8E394F2E7735990081124B /* ReLifeUITests */,
 			);
-			name = PlayGroundUITests;
+			name = ReLifeUITests;
 			packageProductDependencies = (
 			);
-			productName = PlayGroundUITests;
-			productReference = 6B8E394C2E7735990081124B /* PlayGroundUITests.xctest */;
+			productName = ReLifeUITests;
+			productReference = 6B8E394C2E7735990081124B /* ReLifeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 6B8E39302E7735980081124B /* Build configuration list for PBXProject "PlayGround" */;
+			buildConfigurationList = 6B8E39302E7735980081124B /* Build configuration list for PBXProject "ReLife" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +200,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6B8E39342E7735980081124B /* PlayGround */,
-				6B8E39412E7735990081124B /* PlayGroundTests */,
-				6B8E394B2E7735990081124B /* PlayGroundUITests */,
+				6B8E39342E7735980081124B /* ReLife */,
+				6B8E39412E7735990081124B /* ReLifeTests */,
+				6B8E394B2E7735990081124B /* ReLifeUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		6B8E39442E7735990081124B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6B8E39342E7735980081124B /* PlayGround */;
+			target = 6B8E39342E7735980081124B /* ReLife */;
 			targetProxy = 6B8E39432E7735990081124B /* PBXContainerItemProxy */;
 		};
 		6B8E394E2E7735990081124B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6B8E39342E7735980081124B /* PlayGround */;
+			target = 6B8E39342E7735980081124B /* ReLife */;
 			targetProxy = 6B8E394D2E7735990081124B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -393,10 +393,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JNMNBGMRM7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ReLife;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -407,8 +410,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGround;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -420,10 +424,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JNMNBGMRM7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ReLife;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -434,8 +441,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGround;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -451,12 +459,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGroundTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLifeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PlayGround.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PlayGround";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReLife.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ReLife";
 			};
 			name = Debug;
 		};
@@ -469,12 +477,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGroundTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLifeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PlayGround.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PlayGround";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReLife.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ReLife";
 			};
 			name = Release;
 		};
@@ -485,12 +493,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGroundUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLifeUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = PlayGround;
+				TEST_TARGET_NAME = ReLife;
 			};
 			name = Debug;
 		};
@@ -501,19 +509,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.PlayGroundUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReLife.ReLifeUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = PlayGround;
+				TEST_TARGET_NAME = ReLife;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		6B8E39302E7735980081124B /* Build configuration list for PBXProject "PlayGround" */ = {
+		6B8E39302E7735980081124B /* Build configuration list for PBXProject "ReLife" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6B8E39542E7735990081124B /* Debug */,
@@ -522,7 +530,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6B8E39562E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGround" */ = {
+		6B8E39562E7735990081124B /* Build configuration list for PBXNativeTarget "ReLife" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6B8E39572E7735990081124B /* Debug */,
@@ -531,7 +539,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6B8E39592E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGroundTests" */ = {
+		6B8E39592E7735990081124B /* Build configuration list for PBXNativeTarget "ReLifeTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6B8E395A2E7735990081124B /* Debug */,
@@ -540,7 +548,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6B8E395C2E7735990081124B /* Build configuration list for PBXNativeTarget "PlayGroundUITests" */ = {
+		6B8E395C2E7735990081124B /* Build configuration list for PBXNativeTarget "ReLifeUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6B8E395D2E7735990081124B /* Debug */,
