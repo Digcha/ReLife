@@ -146,7 +146,7 @@ struct TodayView: View {
                 noteTag = nil
             }
         }
-        .onChange(of: app.samples) { _ in
+        .onChange(of: app.samples) {
             app.refreshWellnessInsights()
         }
     }
@@ -269,3 +269,4 @@ private struct InsightRow: View {
 }
 
 // Das AddNoteSheet liegt unter Components/AddNoteSheet.swift zur Wiederverwendung
+
