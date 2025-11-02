@@ -4,6 +4,7 @@ import Charts
 // Tagesübersicht mit wichtigsten Messwerten und Aktionen
 struct TodayView: View {
     @EnvironmentObject var app: AppState
+    @EnvironmentObject var bleManager: BLEManager
     @State private var timeWindow: TimeWindow = .h6
     @State private var showAddNote = false
     @State private var noteText: String = ""
@@ -30,14 +31,17 @@ struct TodayView: View {
                 VitalityHero(snapshot: app.vitality)
 
                 // Hinweis falls Nutzer noch nicht verbunden ist
-                if !app.isConnected {
+                if !bleManager.isConnected {
                     HStack {
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(.orange)
                         Text("Nicht verbunden")
                             .font(Font.headline)
                         Spacer()
-                        Button("Verbinden") { app.connectAndLoadDemo() }
+                        Button("Scannen & Verbinden") {
+                            app.isConnected = false
+                            bleManager.resumeConnectionFlow()
+                        }
                             .buttonStyle(.borderedProminent)
                     }
                     .padding()
@@ -269,4 +273,3 @@ private struct InsightRow: View {
 }
 
 // Das AddNoteSheet liegt unter Components/AddNoteSheet.swift zur Wiederverwendung
-

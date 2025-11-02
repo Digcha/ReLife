@@ -15,7 +15,7 @@ struct ReLifeApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if bleManager.isConnected {
+                if bleManager.isConnected || bleManager.didSkipConnection {
                     MainDashboardView()
                 } else {
                     ConnectionView()

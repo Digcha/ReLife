@@ -66,9 +66,18 @@ class BLEManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
         didSkipConnection = true
         lastError = nil
         stopScan()
-        if !isConnected {
-            isConnected = true
-        }
+        peripheral = nil
+        isConnected = false
+    }
+
+    /// Brings the user back to the connection flow for pairing.
+    func resumeConnectionFlow() {
+        didSkipConnection = false
+        lastError = nil
+        peripheral = nil
+        stopScan()
+        isConnected = false
+        startScan()
     }
 
     // MARK: - CBCentralManagerDelegate
