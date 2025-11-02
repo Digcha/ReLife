@@ -9,16 +9,28 @@ import SwiftUI
 
 @main
 struct ReLifeApp: App {
-    // AppState einmalig erzeugen und halten
     @StateObject private var appState = AppState()
+    @StateObject private var bleManager = BLEManager.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                // Gemeinsamen Zustand in die View-Hierarchie geben
-                .environmentObject(appState)
-                // Farbmodus an Benutzerauswahl koppeln
-                .preferredColorScheme(appState.colorSchemeOption.systemScheme)
+            Group {
+                if bleManager.isConnected {
+                    MainDashboardView()
+                } else {
+                    ConnectionView()
+                }
+            }
+            .environmentObject(appState)
+            .environmentObject(bleManager)
+            .preferredColorScheme(appState.colorSchemeOption.systemScheme)
         }
+    }
+}
+
+/// Hosts the main application dashboard once the BLE flow has finished.
+struct MainDashboardView: View {
+    var body: some View {
+        ContentView()
     }
 }

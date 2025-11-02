@@ -400,6 +400,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ReLife;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "ReLife ben\u00f6tigt Bluetooth, um sich mit deinem Armband zu verbinden.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "ReLife verwendet Bluetooth, um Daten mit deinem ReLife M1 Armband auszutauschen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -431,6 +433,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ReLife;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "ReLife ben\u00f6tigt Bluetooth, um sich mit deinem Armband zu verbinden.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "ReLife verwendet Bluetooth, um Daten mit deinem ReLife M1 Armband auszutauschen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
