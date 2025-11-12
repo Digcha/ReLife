@@ -47,39 +47,12 @@ struct ConnectionView: View {
             .padding(.horizontal, 24)
 
             Spacer()
-
-            VStack(spacing: 8) {
-                Text("Oder überspringen, um alte Daten anzuzeigen.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                Button("Überspringen") {
-                    bleManager.skipToDashboard()
-                    if app.samples.isEmpty {
-                        app.generateLast10Days()
-                    }
-                    app.isConnected = false
-                }
-                .font(.footnote.weight(.semibold))
-            }
         }
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color(.systemBackground))
         .onChange(of: bleManager.isConnected, initial: false) { oldValue, newValue in
-            guard newValue else {
-                app.isConnected = false
-                return
-            }
-
-            if bleManager.didSkipConnection {
-                if app.samples.isEmpty {
-                    app.generateLast10Days()
-                }
-                app.isConnected = false
-            } else {
-                app.connectAndLoadDemo()
-            }
+            app.isConnected = newValue
         }
         .onAppear {
             if bleManager.isScanning && bleManager.isConnected {

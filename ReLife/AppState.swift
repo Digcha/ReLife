@@ -106,54 +106,18 @@ final class AppState: ObservableObject {
     // Verbindet die Demo und lädt die Daten einmalig
     func connectAndLoadDemo() {
         isConnected = true
-        generateLast10Days()
     }
 
-    // Erstellt Mock-Daten für die letzten zehn Tage
+    // Live-Daten kommen jetzt ausschließlich über BLE.
     func generateLast10Days() {
-        let now = Date()
-        let tenDaysAgo = Calendar.current.date(byAdding: .day, value: -10, to: now) ?? now
-        var data: [Sample] = []
-
-        let interval: TimeInterval = 60 * 10 // alle 10 Minuten
-        var t = tenDaysAgo
-        while t <= now {
-            let comps = Calendar.current.dateComponents([.hour], from: t)
-            let hour = comps.hour ?? 12
-
-            // Einfache Tageskurve für den Puls
-            let hrBase: Double
-            if (0...5).contains(hour) { hrBase = 56 }
-            else if (6...9).contains(hour) { hrBase = 72 }
-            else if (10...17).contains(hour) { hrBase = 88 }
-            else if (18...21).contains(hour) { hrBase = 82 }
-            else { hrBase = 62 }
-            let hrNoise = Double.random(in: -12...12)
-            let hr = max(50, min(160, Int(hrBase + hrNoise)))
-
-            // Sauerstoffsättigung leicht schwanken lassen
-            let spo2 = max(92, min(100, Int(Double.random(in: 95...99) + Double.random(in: -2...2))))
-
-            // Hauttemperatur mit Tagesverlauf variieren
-            let skinBase: Double = 33.0 + sin((Double(hour)/24.0) * .pi * 2.0) * 1.2
-            let skinTemp = max(30.0, min(36.0, skinBase + Double.random(in: -0.6...0.6)))
-
-            // Hautleitwert tagsüber höher mit zufälligen Spitzen
-            var eda = 1.0 + (Double(hour) > 7 && Double(hour) < 22 ? 2.0 : 0.3) + Double.random(in: 0...1.5)
-            if Bool.random() && (10...18).contains(hour) { eda += Double.random(in: 1.0...6.0) }
-            eda = max(0.2, min(20.0, eda))
-
-            data.append(Sample(timestamp: t, hr: hr, spo2: spo2, skinTempC: skinTemp, edaMicroSiemens: eda))
-            t = t.addingTimeInterval(interval)
-        }
-        samples = data
-        refreshWellnessInsights()
+        samples.removeAll()
+        vitality = .empty
     }
 
-    // Löscht aktuelle Messwerte und generiert neue
+    // Demo-Neuladungen sind deaktiviert.
     func reloadDemoData() {
         samples.removeAll()
-        generateLast10Days()
+        vitality = .empty
     }
 
     // Setzt App-Zustand zurück und leert alles

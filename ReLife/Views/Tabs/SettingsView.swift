@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var app: AppState
+    @EnvironmentObject var bleManager: BLEManager
     @State private var showConfirmClear = false
 
     var body: some View {
@@ -24,15 +25,15 @@ struct SettingsView: View {
                         }
                     }
                 }
-                // Demo-Daten manuell aktualisieren oder leeren
-                Section("Daten") {
-                    Button("Demo-Daten neu laden") { app.reloadDemoData() }
-                        .disabled(!app.isConnected)
+                Section("Letzte Datei vom Board") {
+                    SettingsRow(title: "Erstellt am", value: formatted(bleManager.lastFileCreatedAt))
+                    SettingsRow(title: "Übertragen am", value: formatted(bleManager.lastSyncAt))
+                    if bleManager.syncInProgress {
+                        ProgressView("Synchronisierung läuft…",
+                                     value: bleManager.syncProgress ?? 0,
+                                     total: 1.0)
+                    }
                     Button("Alle Daten löschen", role: .destructive) { showConfirmClear = true }
-                }
-                // Transparenter Hinweis zur Offline-Nutzung
-                Section("Datenschutz") {
-                    Text("Offline-Demo, keine echten Verbindungen.")
                 }
                 // Basisinformationen zur App
                 Section("Info") {
@@ -45,12 +46,9 @@ struct SettingsView: View {
                 }
                 // Status der (Demo-)Verbindung
                 Section("Verbindung") {
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        Text(app.isConnected ? "Verbunden" : "Nicht verbunden")
-                            .foregroundColor(app.isConnected ? .green : .secondary)
-                    }
+                    SettingsRow(title: "Status",
+                                value: app.isConnected ? "Verbunden" : "Nicht verbunden",
+                                valueColor: app.isConnected ? .green : .secondary)
                 }
             }
             .navigationTitle("Einstellungen")
@@ -63,3 +61,24 @@ struct SettingsView: View {
     }
 }
 
+private extension SettingsView {
+    func formatted(_ date: Date?) -> String {
+        guard let date else { return "—" }
+        return date.formatted(date: .numeric, time: .shortened)
+    }
+}
+
+private struct SettingsRow: View {
+    let title: String
+    let value: String
+    var valueColor: Color = .secondary
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text(value)
+                .foregroundColor(valueColor)
+        }
+    }
+}

@@ -18,129 +18,14 @@ struct TodayView: View {
     private var latest: Sample? { today.last }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("ReLife – Heute")
-                        .font(Font.largeTitle.bold())
-                    Text(app.vitality.recoveryPhase)
-                        .font(Font.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                VitalityHero(snapshot: app.vitality)
-
-                // Hinweis falls Nutzer noch nicht verbunden ist
-                if !bleManager.isConnected {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
-                        Text("Nicht verbunden")
-                            .font(Font.headline)
-                        Spacer()
-                        Button("Scannen & Verbinden") {
-                            app.isConnected = false
-                            bleManager.resumeConnectionFlow()
-                        }
-                            .buttonStyle(.borderedProminent)
-                    }
-                    .padding()
-                    .background(Color.rlCardBG)
-                    .cornerRadius(12)
-                }
-
-                // Kacheln mit aktuellen Kennzahlen
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    MetricCardView(
-                        title: "Puls aktuell",
-                        value: latest != nil ? "\(latest!.hr)" : "–",
-                        unit: "bpm",
-                        icon: "heart.fill",
-                        sparklineData: today,
-                        color: .rlPrimary
-                    )
-                    .onTapGesture {}
-
-                    MetricCardView(
-                        title: "SpO₂",
-                        value: latest != nil ? "\(latest!.spo2)" : "–",
-                        unit: "%",
-                        icon: "aqi.medium",
-                        sparklineData: today,
-                        color: .rlSecondary
-                    )
-                    .onTapGesture {}
-
-                    let temp = latest != nil ? (app.temperatureUnit == .celsius ? latest!.skinTempC : latest!.skinTempC * 9/5 + 32) : nil
-                    MetricCardView(
-                        title: "Hauttemp.",
-                        value: temp != nil ? String(format: "%.1f", temp!) : "–",
-                        unit: app.temperatureUnit.rawValue,
-                        icon: "thermometer.sun",
-                        sparklineData: today,
-                        color: .orange
-                    )
-                    .onTapGesture {}
-
-                    MetricCardView(
-                        title: "Hautleitwert",
-                        value: latest != nil ? String(format: "%.1f", latest!.edaMicroSiemens) : "–",
-                        unit: "µS",
-                        icon: "waveform.path.ecg",
-                        sparklineData: today,
-                        color: .pink
-                    )
-                    .onTapGesture {}
-                }
-
-                // Vitalitäts-Hinweise
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("ReLife Insight")
-                        .font(Font.title2.bold())
-                    InsightRow(text: app.vitality.summary, icon: "sparkles")
-                    InsightRow(text: app.vitality.highlight, icon: "leaf.circle")
-                    InsightRow(text: app.vitality.trendDescription, icon: "chart.line.uptrend.xyaxis")
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-                // Steuerung für das Zeitfenster der Charts
-                Picker("Zeitraum", selection: $timeWindow) {
-                    ForEach(TimeWindow.allCases) { w in
-                        Text(w.rawValue).tag(w)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                VStack(spacing: 16) {
-                    MetricChartView(metric: .hr, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .spo2, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .skinTemp, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .eda, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                }
-
-                // Schnellaktionen
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Schnellaktionen")
-                        .font(Font.headline)
-                    HStack(spacing: 12) {
-                        Button {
-                            app.addStressMarker()
-                        } label: {
-                            Label("Stress-Marke setzen", systemImage: "exclamationmark.circle")
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button { showAddNote = true } label: {
-                            Label("Notiz hinzufügen", systemImage: "plus")
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                .padding(.vertical, 8)
+        ZStack {
+            ScrollView {
+                dashboardContent
             }
-            .padding()
+
+            if bleManager.syncInProgress {
+                syncProgressOverlay
+            }
         }
         .sheet(isPresented: $showAddNote) {
             AddNoteSheet(noteText: $noteText, noteTag: $noteTag) {
@@ -152,6 +37,155 @@ struct TodayView: View {
         }
         .onChange(of: app.samples) {
             app.refreshWellnessInsights()
+        }
+    }
+}
+
+private extension TodayView {
+    var dashboardContent: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("ReLife – Heute")
+                    .font(Font.largeTitle.bold())
+                Text(app.vitality.recoveryPhase)
+                    .font(Font.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            VitalityHero(snapshot: app.vitality)
+
+            if !bleManager.isConnected {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.orange)
+                    Text("Nicht verbunden")
+                        .font(Font.headline)
+                    Spacer()
+                    Button("Scannen & Verbinden") {
+                        app.isConnected = false
+                        bleManager.resumeConnectionFlow()
+                    }
+                        .buttonStyle(.borderedProminent)
+                }
+                .padding()
+                .background(Color.rlCardBG)
+                .cornerRadius(12)
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                MetricCardView(
+                    title: "Puls aktuell",
+                    value: latest != nil ? "\(latest!.hr)" : "–",
+                    unit: "bpm",
+                    icon: "heart.fill",
+                    sparklineData: today,
+                    color: .rlPrimary
+                )
+                .onTapGesture {}
+
+                MetricCardView(
+                    title: "SpO₂",
+                    value: latest != nil ? "\(latest!.spo2)" : "–",
+                    unit: "%",
+                    icon: "aqi.medium",
+                    sparklineData: today,
+                    color: .rlSecondary
+                )
+                .onTapGesture {}
+
+                let temp = latest != nil ? (app.temperatureUnit == .celsius ? latest!.skinTempC : latest!.skinTempC * 9/5 + 32) : nil
+                MetricCardView(
+                    title: "Hauttemp.",
+                    value: temp != nil ? String(format: "%.1f", temp!) : "–",
+                    unit: app.temperatureUnit.rawValue,
+                    icon: "thermometer.sun",
+                    sparklineData: today,
+                    color: .orange
+                )
+                .onTapGesture {}
+
+                MetricCardView(
+                    title: "Hautleitwert",
+                    value: latest != nil ? String(format: "%.1f", latest!.edaMicroSiemens) : "–",
+                    unit: "µS",
+                    icon: "waveform.path.ecg",
+                    sparklineData: today,
+                    color: .pink
+                )
+                .onTapGesture {}
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("ReLife Insight")
+                    .font(Font.title2.bold())
+                InsightRow(text: app.vitality.summary, icon: "sparkles")
+                InsightRow(text: app.vitality.highlight, icon: "leaf.circle")
+                InsightRow(text: app.vitality.trendDescription, icon: "chart.line.uptrend.xyaxis")
+            }
+            .padding()
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            Picker("Zeitraum", selection: $timeWindow) {
+                ForEach(TimeWindow.allCases) { w in
+                    Text(w.rawValue).tag(w)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            VStack(spacing: 16) {
+                MetricChartView(metric: .hr, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                MetricChartView(metric: .spo2, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                MetricChartView(metric: .skinTemp, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                MetricChartView(metric: .eda, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Schnellaktionen")
+                    .font(Font.headline)
+                HStack(spacing: 12) {
+                    Button {
+                        app.addStressMarker()
+                    } label: {
+                        Label("Stress-Marke setzen", systemImage: "exclamationmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button { showAddNote = true } label: {
+                        Label("Notiz hinzufügen", systemImage: "plus")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .padding(.vertical, 8)
+        }
+        .padding()
+    }
+
+    var syncProgressOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+
+            VStack(spacing: 12) {
+                ProgressView("Synchronisierung läuft…",
+                             value: bleManager.syncProgress ?? 0,
+                             total: 1.0)
+                    .progressViewStyle(.circular)
+
+                if let progress = bleManager.syncProgress {
+                    Text("\(Int(progress * 100)) %")
+                        .font(.footnote.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Bitte warten…")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(24)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding()
         }
     }
 }
