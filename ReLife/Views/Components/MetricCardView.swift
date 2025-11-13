@@ -10,21 +10,31 @@ struct MetricCardView: View {
     let sparklineData: [Sample]
     let color: Color
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .font(Font.title3)
-                    .foregroundColor(color)
-                Spacer()
+        VStack(spacing: 12) {
+            Circle()
+                .fill(color.opacity(0.2))
+                .frame(width: 34, height: 34)
+                .overlay(
+                    Image(systemName: icon)
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(color)
+                )
+            Text(title.uppercased())
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+            VStack(spacing: 0) {
                 Text(value)
-                    .font(Font.system(size: 24, weight: .bold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
                 Text(unit)
-                    .foregroundColor(.secondary)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
-            Text(title)
-                .font(Font.subheadline)
-                .foregroundColor(.secondary)
+            Capsule()
+                .fill(color.opacity(0.6))
+                .frame(height: 3)
             // Sparklines visualisieren den Verlauf kompakt
             Chart(sparklineData) { s in
                 LineMark(
@@ -39,6 +49,9 @@ struct MetricCardView: View {
             .frame(height: 40)
         }
         .padding()
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 170)
+        .multilineTextAlignment(.center)
         .background(Color.rlCardBG)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
@@ -53,7 +66,8 @@ struct MetricCardView: View {
         case _ where title.contains("Puls"): return Double(sample.hr)
         case _ where title.contains("SpO"): return Double(sample.spo2)
         case _ where title.contains("Hauttemp"): return sample.skinTempC
-        default: return sample.edaMicroSiemens
+        case _ where title.contains("Schritt"): return Double(sample.steps)
+        default: return Double(sample.hr)
         }
     }
 }
