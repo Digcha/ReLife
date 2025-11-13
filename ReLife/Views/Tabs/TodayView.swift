@@ -9,17 +9,17 @@ struct TodayView: View {
     @State private var showAddNote = false
     @State private var noteText: String = ""
     @State private var noteTag: NoteTag? = nil
+    private let metricColumns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
 
     // Messwerte nur für den aktuellen Tag
     private var today: [Sample] { app.samples.forToday() }
-    // Daten für das gewählte Zeitfenster
-    private var window: [Sample] { app.samples.inLast(hours: timeWindow.hours) }
-
     private var latest: Sample? { today.last }
+    private let stepGoal: Int = 10_000
+    private var todaysSteps: Int { latest?.steps ?? 0 }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("ReLife – Heute")
                         .font(Font.largeTitle.bold())
@@ -28,29 +28,43 @@ struct TodayView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                VitalityHero(snapshot: app.vitality)
-
                 // Hinweis falls Nutzer noch nicht verbunden ist
                 if !bleManager.isConnected {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
-                        Text("Nicht verbunden")
-                            .font(Font.headline)
-                        Spacer()
-                        Button("Scannen & Verbinden") {
-                            app.isConnected = false
-                            bleManager.resumeConnectionFlow()
+                    Button {
+                        app.isConnected = false
+                        bleManager.resumeConnectionFlow()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "dot.radiowaves.left.and.right")
+                                .font(.title2)
+                                .foregroundColor(.orange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Nicht verbunden")
+                                    .font(.headline)
+                                Text("Tippen zum Scannen & Verbinden")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(.secondary)
                         }
-                            .buttonStyle(.borderedProminent)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.rlCardBG)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(Color.orange.opacity(0.4), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .shadow(color: .black.opacity(0.09), radius: 12, y: 4)
                     }
-                    .padding()
-                    .background(Color.rlCardBG)
-                    .cornerRadius(12)
+                    .buttonStyle(.plain)
                 }
 
                 // Kacheln mit aktuellen Kennzahlen
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                LazyVGrid(columns: metricColumns, alignment: .center, spacing: 16) {
                     MetricCardView(
                         title: "Puls aktuell",
                         value: latest != nil ? "\(latest!.hr)" : "–",
@@ -81,17 +95,11 @@ struct TodayView: View {
                         color: .orange
                     )
                     .onTapGesture {}
-
-                    MetricCardView(
-                        title: "Hautleitwert",
-                        value: latest != nil ? String(format: "%.1f", latest!.edaMicroSiemens) : "–",
-                        unit: "µS",
-                        icon: "waveform.path.ecg",
-                        sparklineData: today,
-                        color: .pink
-                    )
-                    .onTapGesture {}
                 }
+
+                CompactStepsCard(steps: todaysSteps, goal: stepGoal)
+
+                VitalityHero(snapshot: app.vitality)
 
                 // Vitalitäts-Hinweise
                 VStack(alignment: .leading, spacing: 12) {
@@ -117,7 +125,7 @@ struct TodayView: View {
                     MetricChartView(metric: .hr, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
                     MetricChartView(metric: .spo2, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
                     MetricChartView(metric: .skinTemp, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .eda, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                    MetricChartView(metric: .steps, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
                 }
 
                 // Schnellaktionen
@@ -179,11 +187,11 @@ private struct VitalityHero: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Vitality Score")
+                        Text("ReLife-Score")
                             .font(.headline)
                             .foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text("\(snapshot.vitalityScore)")
+                            Text("\(snapshot.relifeScore)")
                                 .font(.system(size: 58, weight: .bold, design: .rounded))
                                 .foregroundStyle(scoreGradient)
                             Text("von 100")
@@ -269,6 +277,94 @@ private struct InsightRow: View {
                 .font(.body)
             Spacer()
         }
+    }
+}
+
+// Kompakter Steps-Block mit Highlight-Ring
+private struct CompactStepsCard: View {
+    var steps: Int
+    var goal: Int
+
+    private var progress: Double {
+        guard goal > 0 else { return 0 }
+        return min(Double(steps) / Double(goal), 1.0)
+    }
+
+    private var remainingSteps: Int {
+        max(goal - steps, 0)
+    }
+
+    private var goalReached: Bool { steps >= goal }
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.08), lineWidth: 10)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(AngularGradient(colors: [.rlSecondary, .rlPrimary, .blue], center: .center), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .shadow(color: goalReached ? Color.rlSecondary.opacity(0.5) : Color.rlPrimary.opacity(0.3), radius: 6, y: 4)
+                VStack(spacing: 2) {
+                    Text("\(Int(progress * 100))%")
+                        .font(.caption.weight(.bold))
+                    Text("ZIEL")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 110, height: 110)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Schritte", systemImage: "figure.walk.circle")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(steps.formatted())
+                    .font(.title.bold())
+                Text(goalReached ? "Ziel erreicht – Bonusbewegung starten." : "\(remainingSteps.formatted()) Schritte bis \(goal.formatted()).")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    StepsBadge(
+                        text: goalReached ? "Ziel erreicht" : "Noch \(remainingSteps.formatted())",
+                        systemImage: goalReached ? "sparkles" : "flag.checkered",
+                        highlight: goalReached
+                    )
+                    StepsBadge(text: "Move+", systemImage: "bolt.heart")
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.04), lineWidth: 1)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 14, y: 8)
+    }
+}
+
+private struct StepsBadge: View {
+    var text: String
+    var systemImage: String
+    var highlight: Bool = false
+
+    var body: some View {
+        Label(text.uppercased(), systemImage: systemImage)
+            .font(.caption2.weight(.semibold))
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .foregroundStyle(highlight ? Color.black : Color.secondary)
+            .background(
+                Capsule()
+                    .fill(highlight ? Color.rlSecondary.opacity(0.25) : Color.white.opacity(0.08))
+            )
     }
 }
 

@@ -19,7 +19,7 @@ struct TrendsView: View {
         case .hr: xs = app.samples.map { Double($0.hr) }
         case .spo2: xs = app.samples.map { Double($0.spo2) }
         case .skinTemp: xs = app.samples.map { app.temperatureUnit == .celsius ? $0.skinTempC : $0.skinTempC * 9/5 + 32 }
-        case .eda: xs = app.samples.map { $0.edaMicroSiemens }
+        case .steps: xs = app.samples.map { Double($0.steps) }
         case .all: return nil
         }
         guard !xs.isEmpty else { return nil }
@@ -39,43 +39,9 @@ struct TrendsView: View {
                   let reference = cal.date(bySettingHour: 23, minute: 30, second: 0, of: day) else { continue }
             let snapshot = app.snapshot(for: reference)
             if snapshot == .empty { continue }
-            items.append(DailyVitality(date: day, vitalityScore: snapshot.vitalityScore, balanceScore: snapshot.balanceScore))
+            items.append(DailyVitality(date: day, relifeScore: snapshot.relifeScore, balanceScore: snapshot.balanceScore))
         }
         return items
-    }
-
-    // Aufteilung der letzten 24 Stunden nach Leitwert-Zonen
-    private var electroDermalDistribution: [EDAZone] {
-        let recent = app.samples.inLast(hours: 24)
-        guard !recent.isEmpty else { return [] }
-        let slice = recent.reduce(into: [EDAZone.Kind: Int]()) { partial, sample in
-            let kind: EDAZone.Kind
-            switch sample.edaMicroSiemens {
-            case ..<2.2: kind = .calm
-            case 2.2..<4.5: kind = .focus
-            default: kind = .charged
-            }
-            partial[kind, default: 0] += 1
-        }
-        let total = Double(recent.count)
-        return EDAZone.Kind.allCases.map { kind in
-            let count = Double(slice[kind, default: 0])
-            return EDAZone(kind: kind, ratio: count / total)
-        }
-    }
-
-    private var edaSummary: String {
-        guard let focusZone = electroDermalDistribution.first(where: { $0.kind == .focus }) else {
-            return "Noch keine Verteilung vorhanden."
-        }
-        let focusPercent = Int(focusZone.ratio * 100)
-        if focusPercent > 42 {
-            return "Starker Fokus-Window – nimm Micro-Pausen für Balance."
-        }
-        if focusPercent < 25 {
-            return "Sehr ruhige Leitwerte – achte auf dynamische Aktivierung."
-        }
-        return "Solide Balance zwischen Ruhe und Fokus."
     }
 
     private let dateFormatter: DateFormatter = {
@@ -83,9 +49,44 @@ struct TrendsView: View {
         df.dateFormat = "dd.MM."
         return df
     }()
+    private let stepGoal = 10_000
+
+    private var weeklySteps: [DailySteps] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        var items: [DailySteps] = []
+        for offset in (0..<7).reversed() {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let samplesForDay = app.samples.filter { cal.isDate($0.timestamp, inSameDayAs: day) }
+            guard let steps = samplesForDay.last?.steps else { continue }
+            items.append(DailySteps(date: day, steps: steps))
+        }
+        return items
+    }
+
+    private func averageSteps(for days: [DailySteps]) -> Int {
+        guard !days.isEmpty else { return 0 }
+        let total = days.reduce(0) { $0 + $1.steps }
+        return total / days.count
+    }
+
+    private func stepsSummary(for days: [DailySteps]) -> String {
+        guard let latest = days.last else {
+            return "Noch keine Schrittwerte vorhanden."
+        }
+        let avg = averageSteps(for: days)
+        if latest.steps >= stepGoal {
+            return "Du knackst dein Tagesziel regelmäßig – halte dieses Momentum fest."
+        }
+        if avg >= Int(Double(stepGoal) * 0.9) {
+            return "Durchschnittlich \(avg.formatted()) Schritte – nur noch ein kleiner Push bis zum Ziel."
+        }
+        return "Aktuell \(latest.steps.formatted()) Schritte – plane Walks oder Treppenwege, um die \(stepGoal.formatted()) zu erreichen."
+    }
 
     var body: some View {
-        ScrollView {
+        let steps = weeklySteps
+        return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text(rangeText)
@@ -98,27 +99,19 @@ struct TrendsView: View {
                     .buttonStyle(.bordered)
                 }
 
-                // Verlauf des Vitalitätsscores visualisieren
+                // Verlauf des ReLife-Scores visualisieren
                 if !dailyVitalities.isEmpty {
                     VitalityTimeline(dailyVitalities: dailyVitalities, formatter: dateFormatter)
                 }
 
-                if !electroDermalDistribution.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("EDA-Zonen (24h)")
-                            .font(.title3.bold())
-                        Text(edaSummary)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        HStack(spacing: 12) {
-                            ForEach(electroDermalDistribution) { zone in
-                                ZoneCard(zone: zone)
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Color.rlCardBG.opacity(0.85))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                if !steps.isEmpty {
+                    StepsWeeklyView(
+                        dailySteps: steps,
+                        goal: stepGoal,
+                        formatter: dateFormatter,
+                        summary: stepsSummary(for: steps),
+                        averageSteps: averageSteps(for: steps)
+                    )
                 }
 
                 // Nutzer entscheidet, welche Kennzahl gezeigt wird
@@ -144,7 +137,7 @@ struct TrendsView: View {
                         MetricChartView(metric: .hr, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
                         MetricChartView(metric: .spo2, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
                         MetricChartView(metric: .skinTemp, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                        MetricChartView(metric: .eda, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                        MetricChartView(metric: .steps, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
                     } else {
                         MetricChartView(metric: selectedMetric, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
                     }
@@ -160,11 +153,11 @@ struct TrendsView: View {
 
     // Baut eine einfache CSV-Tabelle über alle Messwerte
     private func exportCSV() {
-        var out = "timestamp,hr,spo2,skinTempC,edaMicroSiemens\n"
+        var out = "timestamp,hr,spo2,skinTempC,steps\n"
         // Zeitstempel im ISO-Format ausgeben
         let df = ISO8601DateFormatter()
         for s in app.samples {
-            out += "\(df.string(from: s.timestamp)),\(s.hr),\(s.spo2),\(String(format: "%.2f", s.skinTempC)),\(String(format: "%.3f", s.edaMicroSiemens))\n"
+            out += "\(df.string(from: s.timestamp)),\(s.hr),\(s.spo2),\(String(format: "%.2f", s.skinTempC)),\(s.steps)\n"
         }
         csvText = out
         showShare = true
@@ -175,7 +168,7 @@ struct TrendsView: View {
 private struct DailyVitality: Identifiable {
     let id = UUID()
     let date: Date
-    let vitalityScore: Int
+    let relifeScore: Int
     let balanceScore: Int
 }
 
@@ -185,16 +178,16 @@ private struct VitalityTimeline: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("ReLife Score Verlauf")
+            Text("ReLife-Score Verlauf")
                 .font(.title3.bold())
-            Text("Balance & Vitalität der letzten 7 Tage.")
+            Text("Balance & Energie der letzten 7 Tage.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Chart {
                 ForEach(dailyVitalities) { item in
                     AreaMark(
                         x: .value("Tag", item.date),
-                        y: .value("Score", item.vitalityScore)
+                        y: .value("Score", item.relifeScore)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -205,20 +198,20 @@ private struct VitalityTimeline: View {
                     )
                     LineMark(
                         x: .value("Tag", item.date),
-                        y: .value("Score", item.vitalityScore)
+                        y: .value("Score", item.relifeScore)
                     )
                     .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
                     .foregroundStyle(Color.rlPrimary)
 
                     PointMark(
                         x: .value("Tag", item.date),
-                        y: .value("Score", item.vitalityScore)
+                        y: .value("Score", item.relifeScore)
                     )
                     .symbolSize(70)
                     .foregroundStyle(Color.white)
                     .annotation(position: .top) {
                         VStack(spacing: 2) {
-                            Text("\(item.vitalityScore)")
+                            Text("\(item.relifeScore)")
                                 .font(.caption.bold())
                                 .foregroundStyle(Color.rlPrimary)
                             Text(formatter.string(from: item.date))
@@ -252,60 +245,77 @@ private struct VitalityTimeline: View {
     }
 }
 
-private struct EDAZone: Identifiable {
-    enum Kind: CaseIterable, Identifiable {
-        case calm
-        case focus
-        case charged
-        var id: Self { self }
-
-        var title: String {
-            switch self {
-            case .calm: return "Calm"
-            case .focus: return "Focus"
-            case .charged: return "Charged"
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .calm: return "water.waves"
-            case .focus: return "scope"
-            case .charged: return "bolt.fill"
-            }
-        }
-
-        var tint: Color {
-            switch self {
-            case .calm: return Color.mint
-            case .focus: return Color.rlPrimary
-            case .charged: return Color.pink
-            }
-        }
-    }
-
+private struct DailySteps: Identifiable {
     let id = UUID()
-    let kind: Kind
-    let ratio: Double
+    let date: Date
+    let steps: Int
 }
 
-private struct ZoneCard: View {
-    var zone: EDAZone
+private struct StepsWeeklyView: View {
+    var dailySteps: [DailySteps]
+    var goal: Int
+    var formatter: DateFormatter
+    var summary: String
+    var averageSteps: Int
 
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: zone.kind.icon)
-                .font(.title2)
-                .foregroundStyle(zone.kind.tint)
-            Text(zone.kind.title)
-                .font(.headline)
-            Text("\(Int(zone.ratio * 100)) %")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Schritte (7 Tage)")
                 .font(.title3.bold())
-                .foregroundStyle(zone.kind.tint)
+            Text(summary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Chart {
+                ForEach(dailySteps) { item in
+                    BarMark(
+                        x: .value("Tag", item.date),
+                        y: .value("Schritte", item.steps)
+                    )
+                    .foregroundStyle(item.steps >= goal ? Color.rlPrimary : Color.blue.opacity(0.7))
+                    .cornerRadius(6)
+                }
+                RuleMark(y: .value("Ziel", goal))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [5]))
+                    .foregroundStyle(.secondary)
+                    .annotation(position: .topTrailing) {
+                        Text("\(goal.formatted()) Ziel")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+            }
+            .frame(height: 220)
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day)) { value in
+                    AxisGridLine()
+                    if let date = value.as(Date.self) {
+                        AxisValueLabel(formatter.string(from: date))
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+
+            HStack {
+                Label("\(averageSteps.formatted()) Schritte Ø", systemImage: "figure.walk")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Label(goalLabel, systemImage: "flag.checkered")
+                    .font(.subheadline)
+            }
+            .padding(.top, 4)
         }
         .padding()
-        .frame(maxWidth: .infinity)
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.rlCardBG.opacity(0.85))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var goalLabel: String {
+        if let last = dailySteps.last, last.steps >= goal {
+            return "Ziel erreicht"
+        }
+        let latest = dailySteps.last?.steps ?? 0
+        let remaining = max(goal - latest, 0)
+        return "Noch \(remaining.formatted())"
     }
 }
