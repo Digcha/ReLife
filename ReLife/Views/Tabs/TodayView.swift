@@ -6,9 +6,6 @@ struct TodayView: View {
     @EnvironmentObject var app: AppState
     @EnvironmentObject var bleManager: BLEManager
     @State private var timeWindow: TimeWindow = .h6
-    @State private var showAddNote = false
-    @State private var noteText: String = ""
-    @State private var noteTag: NoteTag? = nil
     private let metricColumns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
 
     // Messwerte nur für den aktuellen Tag
@@ -129,36 +126,10 @@ struct TodayView: View {
                 }
 
                 // Schnellaktionen
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Schnellaktionen")
-                        .font(Font.headline)
-                    HStack(spacing: 12) {
-                        Button {
-                            app.addStressMarker()
-                        } label: {
-                            Label("Stress-Marke setzen", systemImage: "exclamationmark.circle")
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button { showAddNote = true } label: {
-                            Label("Notiz hinzufügen", systemImage: "plus")
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                .padding(.vertical, 8)
             }
             .padding()
         }
-        .sheet(isPresented: $showAddNote) {
-            AddNoteSheet(noteText: $noteText, noteTag: $noteTag) {
-                app.addNote(tag: noteTag, text: noteText)
-                // Eingaben nach dem Speichern zurücksetzen
-                noteText = ""
-                noteTag = nil
-            }
-        }
-        .onChange(of: app.samples) {
+        .onChange(of: app.samples) { _, _ in
             app.refreshWellnessInsights()
         }
     }
@@ -367,5 +338,3 @@ private struct StepsBadge: View {
             )
     }
 }
-
-// Das AddNoteSheet liegt unter Components/AddNoteSheet.swift zur Wiederverwendung
