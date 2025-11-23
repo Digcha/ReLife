@@ -4,7 +4,11 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var app: AppState
     @State private var showConfirmClear = false
+    @State private var showConfirmLeafyClear = false
     @State private var showHelpSheet = false
+    private let leafyArchive = LeafyArchiveService()
+    @State private var leafyAlert = false
+    @State private var dataAlert = false
 
     var body: some View {
         NavigationStack {
@@ -29,7 +33,16 @@ struct SettingsView: View {
                 Section("Daten") {
                     Button("Demo-Daten neu laden") { app.reloadDemoData() }
                         .disabled(!app.isConnected)
-                    Button("Alle Daten löschen", role: .destructive) { showConfirmClear = true }
+                    Button(role: .destructive) { dataAlert = true } label: {
+                        Label("Alle Daten löschen", systemImage: "trash")
+                    }
+                }
+                Section("Leafy") {
+                    Button(role: .destructive) {
+                        leafyAlert = true
+                    } label: {
+                        Label("Leafy-Chat von heute löschen", systemImage: "trash")
+                    }
                 }
                 // Transparenter Hinweis zur Offline-Nutzung
                 Section("Datenschutz") {
@@ -65,10 +78,19 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Einstellungen")
-            .confirmationDialog("Alle Daten wirklich löschen?", isPresented: $showConfirmClear, titleVisibility: .visible) {
-                // Sicherheitsabfrage, bevor alles zurückgesetzt wird
+            .alert("Alle Daten wirklich löschen?", isPresented: $dataAlert) {
                 Button("Löschen", role: .destructive) { app.clearAllData() }
                 Button("Abbrechen", role: .cancel) {}
+            }
+            .alert("Leafy-Chat löschen?", isPresented: $leafyAlert) {
+                Button("Löschen", role: .destructive) {
+                    let today = Calendar.current.startOfDay(for: Date())
+                    leafyArchive.clearChat(for: today)
+                    NotificationCenter.default.post(name: .leafyClearToday, object: nil)
+                }
+                Button("Abbrechen", role: .cancel) {}
+            } message: {
+                Text("Der Chatverlauf von heute wird endgültig gelöscht.")
             }
             .sheet(isPresented: $showHelpSheet) {
                 HelpSheetView()
