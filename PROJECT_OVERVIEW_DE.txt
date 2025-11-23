@@ -2,7 +2,7 @@ Projektübersicht – ReLife (SwiftUI iOS Demo)
 
 Kurzbeschreibung
 - Demo‑App „ReLife“ auf Basis von SwiftUI. Lädt beim „Verbinden“ plausible, zufällig generierte Gesundheitsdaten (letzte 10 Tage) rein lokal (keine echten Verbindungen).
-- Fokus: Visualisierung (Karten, Linien‑Charts), Notizen/Tags, CSV‑Export, Grundeinstellungen (Darstellung, Einheiten, Datensteuerung).
+- Fokus: Visualisierung (Karten, Linien‑Charts), Leafy-Coaching, CSV‑Export, Grundeinstellungen (Darstellung, Einheiten, Datensteuerung).
 - Vitalitäts-Refresh 2025: Neuer ReLife Score (Vitality/Balance) und weiterentwickelte Liquid-Glass-Ästhetik für das Dashboard.
 
 Wichtigste Technologien
@@ -20,14 +20,14 @@ Wichtigste Technologien
 Projektstruktur (Auszug)
 - ReLife/ReLifeApp.swift: App‑Entry, hängt `AppState` als Environment an und setzt Farbschema.
 - ReLife/AppState.swift: Zentrales Modell & State.
-  - Modelle: `Sample` (timestamp, hr, spo2, skinTempC, edaMicroSiemens), `Note` (date, tag, text).
-  - Neu: `VitalitySnapshot` bündelt ReLife Score, Balance-Level, Phase & narrative Insights.
-  - Enums: `NoteTag`, `MetricType` (all, hr, spo2, skinTemp, eda), `TimeWindow` (6h/12h/24h), `TemperatureUnit` (°C/°F), `ColorSchemeOption` (System/Hell/Dunkel).
-  - Aktionen: `connectAndLoadDemo()`, `generateLast10Days()`, `reloadDemoData()`, `clearAllData()`, `addNote(...)`, `addStressMarker()`.
+  - Modelle: `Sample` (timestamp, hr, spo2, skinTempC, edaMicroSiemens) sowie `VitalitySnapshot` (ReLife Score, Balance-Level, Phase & Narrative).
+  - Enums: `MetricType` (all, hr, spo2, skinTemp, eda), `TimeWindow` (6h/12h/24h), `TemperatureUnit` (°C/°F), `ColorSchemeOption` (System/Hell/Dunkel).
+  - Aktionen: `connectAndLoadDemo()`, `generateLast10Days()`, `reloadDemoData()`, `clearAllData()`, `refreshWellnessInsights()`.
   - Vitalitäts-Analyse: `refreshWellnessInsights()` ermittelt Score, Balance & Trendtexte; `snapshot(for:)` erlaubt zeitliche Auswertungen.
   - Array‑Helper: Filter nach Zeitraum bzw. „heute“.
   - Farb‑Helper: `Color.rlPrimary/rlSecondary/rlCardBG` mappen auf Asset‑Farben.
-- ReLife/ContentView.swift: Schaltet zwischen `ConnectScreen` und Tab‑UI (Heute, Trends, Protokoll, Einstellungen).
+- ReLife/ContentView.swift: Schaltet zwischen `ConnectScreen` und Tab‑UI (Heute, Trends, Leafy, Einstellungen).
+- ReLife/Leafy: Neues Leafy-Coach-Modul mit Datenaufbereitung, OpenAI-Client/Caching und ViewModel.
 
 Views – Hauptscreens (ReLife/Views/Tabs)
 - TodayView.swift:
@@ -35,14 +35,14 @@ Views – Hauptscreens (ReLife/Views/Tabs)
   - Danach Kennzahlen‑Karten (Puls, SpO₂, Hauttemp., Hautleitwert) mit Mini‑Sparklines.
   - Zeitfenster‑Picker (6/12/24h) für darunterliegende Charts.
   - 4 Charts (je Metrik) auf Basis von `MetricChartView`.
-  - Schnellaktionen: Stress‑Marker setzen, Notiz hinzufügen (Sheet).
 - TrendsView.swift:
   - Vitality Timeline fasst die letzten 7 Tage in Chart (Area/Line) zusammen, inkl. Balance-Scores.
   - EDA-Zonenkarte (Calm/Focus/Charged) visualisiert Hautleitwertverteilung + Empfehlungstext.
   - Metrik‑Picker (Alle/Einzelmetriken), einfache Statistik (Min/Ø/Max) und 24h‑Charts bleiben erhalten.
   - CSV‑Export aller Samples via Teilen‑Sheet (`ActivityView`).
-- LogView.swift:
-  - Notizliste mit Tag‑Filter (Segmented Picker), Hinzufügen/Löschen von Notizen.
+- LeafyView.swift:
+  - Neuer Tab mit Leafy Health-Coach, Analyse-CTA und Chatmodus, der sich per Button öffnet und mit Animationen/Haptics reagiert.
+  - Nutzt OpenAI `gpt-4o-mini`, JSON-Aggregation der letzten 7–14 Tage, Loading-Animation sowie Offline-Fallback.
 - SettingsView.swift:
   - Darstellung: Farbmodus (System/Hell/Dunkel).
   - Einheiten: Temperatur (°C/°F).
@@ -54,9 +54,8 @@ Views – Komponenten (ReLife/Views/Components)
 - MetricCardView: kompakte Kennzahlenkarte inkl. Mini‑Chart (Charts) und Icon.
 - MetricChartView: Haupt‑Charts pro Metrik mit Zeitachse (Apple Charts).
 - StatCard: kleine Statistikkarte (Min/Ø/Max).
-- TagPill: Tag‑Abzeichen für Notizen.
-- AddNoteSheet: Reusable Sheet zum Erfassen einer Notiz inkl. Tag‑Picker.
 - ActivityView: `UIViewControllerRepresentable`‑Wrapper für Teilen‑Sheet (CSV‑Export).
+- Leafy-spezifische UI steckt direkt in `LeafyView` (Analyse-CTA, Chatmodus mit Bubbles, Loading Leaf).
 
 Daten & Logik
 - Es gibt keine echte Datenquelle oder Persistenz. `AppState.generateLast10Days()` erzeugt plausible Mock‑Daten im 10‑Minuten‑Raster über 10 Tage.
@@ -72,7 +71,7 @@ Design & UX
 - System‑Icons (SF Symbols) für Konsistenz.
 - Schatten/Ecken für Kartenoptik, einfache Accessibility‑Labels.
 - Vitality-Hero nutzt `Color.rlPrimary`, Glaslayer & Gradienten für „Liquid Energy“.
-- Haptik‑Feedback für wichtige Aktionen (iOS).
+- Haptik‑Feedback für Buttons/Analysen, Leafy nutzt zusätzliche Medium/Success/Soft Haptics.
 
 Build/Runtime‑Anforderungen
 - Xcode‑Projekt: `ReLife.xcodeproj` (iOS App, SwiftUI).
@@ -88,7 +87,7 @@ Bekannte Einschränkungen
 Tipps zum Einstieg
 1) Starte in `ReLifeApp.swift` und `ContentView.swift`, um Navigationsfluss zu verstehen.
 2) Lies `AppState.swift` für Datenmodell, Demo‑Datenerzeugung und globale Einstellungen.
-3) Öffne nacheinander die Tabs (`TodayView`, `TrendsView`, `LogView`, `SettingsView`).
+3) Öffne nacheinander die Tabs (`TodayView`, `TrendsView`, `LeafyView`, `SettingsView`).
 4) Sieh dir Komponenten unter `Views/Components` an (Chart‑ und Kartenaufbau).
 5) Baue/Runs in Xcode (iOS‑Simulator, iOS 16+). Für CSV‑Export eine Beispiel‑Session durchlaufen und Teilen‑Sheet testen.
 

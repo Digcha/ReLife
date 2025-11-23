@@ -1,20 +1,21 @@
 # ReLife – SwiftUI Demo
 
-ReLife ist eine SwiftUI-Demo-App, die einen Vitalitäts- und Gesundheitsfeed mit simulierten Sensordaten zeigt. Der Fokus liegt auf modernen UI-Mustern (Liquid-Glass-Optik, Apple Charts) und einem klaren Flow von der Demo-Verbindung bis zu Auswertungen, Notizen und Export.
+ReLife ist eine SwiftUI-Demo-App, die einen Vitalitäts- und Gesundheitsfeed mit simulierten Sensordaten zeigt. Der Fokus liegt auf modernen UI-Mustern (Liquid-Glass-Optik, Apple Charts) und einem klaren Flow von der Demo-Verbindung bis zu Auswertungen, Leafy-Coaching und Export.
 
 ## Inhalt & Features
 - **Demo-Verbindung** (`Views/ConnectScreen.swift`): Laden zufälliger, plausibler Vitaldaten für die letzten 10 Tage.
-- **Today-Tab** (`Views/Tabs/TodayView.swift`): ReLife Score, Balance-Level, Kennzahlenkarten, Apple-Charts nach Zeitfenster, Schnellaktionen (Stress-Marker, Notiz).
+- **Today-Tab** (`Views/Tabs/TodayView.swift`): ReLife Score, Balance-Level, Kennzahlenkarten, Apple-Charts nach Zeitfenster.
 - **Trends-Tab** (`Views/Tabs/TrendsView.swift`): 7-Tage-Vitality-Timeline, EDA-Zonenkarten, Kennzahlen-Statistiken, CSV-Export via Share Sheet.
-- **Protokoll-Tab** (`Views/Tabs/LogView.swift`): Notizen mit Tag-Filtern, Hinzufügen/Löschen über `AddNoteSheet`.
+- **Leafy-Tab** (`Views/Tabs/LeafyView.swift`): KI-Coach mit OpenAI-Anbindung, Analyse-Button und neuem Chatmodus mit animierten Bubbles & archiviertem Verlauf.
 - **Einstellungen** (`Views/Tabs/SettingsView.swift`): Farbmodus, Temperatur-Einheit, Demo-Daten neu laden, Daten löschen, Statushinweise.
-- **AppState** (`AppState.swift`): Zentrale Datenhaltung (`@ObservableObject`) inkl. Demo-Datengenerierung, Vitality-Berechnung, Notizenverwaltung, Farb-Helper.
+- **AppState** (`AppState.swift`): Zentrale Datenhaltung (`@EnvironmentObject`) inkl. Demo-Datengenerierung, Vitality-Berechnung, Farb-Helper sowie Leafy-Datenbereitstellung.
 - **UI-Komponenten** (`Views/Components`): Buttons, Chart-/Karten-Bausteine, Tag Pills, ActivityView (Share Sheet).
+- **Leafy-Engine** (`Leafy/LeafyDataBuilder.swift`, `Leafy/LeafyCoachService.swift`, `Leafy/LeafyViewModel.swift`): JSON-Aggregation (7–14 Tage), OpenAI-Client mit Cache/Fallback sowie Chat-Archiv/Reset-Handling.
 - **Tests** (`ReLifeTests`, `ReLifeUITests`): Gerüste für Swift Testing und XCTest UI-Tests.
 
 ## Architekturüberblick
 - **SwiftUI + NavigationStack/TabView**: Struktur mit einem `AppState` als `@EnvironmentObject`, der den gesamten Flow steuert.
-- **Modelle & Auswertungen**: `Sample`, `Note`, `VitalitySnapshot` sowie Berechnungen für Vitality Score, Balance-Level, Trendtexte.
+- **Modelle & Auswertungen**: `Sample`, `VitalitySnapshot` sowie Leafy-spezifische JSON-Aufbereitung und Vitality-Berechnungen.
 - **Charts**: Apple `Charts` Framework für Linien-, Flächen- und Balkendarstellungen.
 - **UIKit-Interop**: Haptik im `PrimaryButton` sowie CSV-Export via `UIActivityViewController`.
 - **Designsystem**: Markenfarben aus `Assets.xcassets`, Glasoptik über Material-Hintergründe, SF Symbols.
@@ -32,7 +33,7 @@ ReLife ist eine SwiftUI-Demo-App, die einen Vitalitäts- und Gesundheitsfeed mit
 - Keine Lokalisierung; Texte aktuell nur auf Deutsch.
 
 ## Offene Baustellen & Ideen
-1. **Persistenz**: Core Data/SwiftData oder File-basiert, um Notizen und Messwerte zu behalten.
+1. **Persistenz**: Core Data/SwiftData oder File-basiert, um Messwerte und Leafy-Verläufe zu behalten.
 2. **Echte Datenquellen**: Anbindung an HealthKit, Wearables oder API.
 3. **Analytics & Insights**: Weitere Kennzahlen (z. B. HRV, Schlaf), Vergleich zum Wochendurchschnitt.
 4. **Internationalisierung**: Lokalisierungen (Deutsch/Englisch) und String-Management.

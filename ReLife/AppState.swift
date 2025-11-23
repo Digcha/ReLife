@@ -12,23 +12,6 @@ struct Sample: Identifiable, Hashable {
     let steps: Int
 }
 
-// Speichert eine Notiz, optional mit Tag
-struct Note: Identifiable, Hashable {
-    let id = UUID()
-    var date: Date
-    var tag: NoteTag?
-    var text: String
-}
-
-// Vorgegebene Kategorien für Notizen
-enum NoteTag: String, CaseIterable, Identifiable {
-    case stress = "Stress"
-    case sleep = "Schlaf"
-    case sport = "Sport"
-    case work = "Arbeit"
-    var id: String { rawValue }
-}
-
 // Verdichtete Kennzahlen für das Vitalitäts-Cockpit
 struct VitalitySnapshot: Hashable {
     var relifeScore: Int
@@ -96,7 +79,6 @@ enum ColorSchemeOption: String, CaseIterable, Identifiable {
 final class AppState: ObservableObject {
     @Published var isConnected: Bool = false
     @Published var samples: [Sample] = []
-    @Published var notes: [Note] = []
     @Published var vitality: VitalitySnapshot = .empty
 
     @Published var temperatureUnit: TemperatureUnit = .celsius
@@ -218,20 +200,8 @@ final class AppState: ObservableObject {
     // Setzt App-Zustand zurück und leert alles
     func clearAllData() {
         samples.removeAll()
-        notes.removeAll()
         isConnected = false
         vitality = .empty
-    }
-
-    // MARK: - Notizen
-    // Legt eine neue Notiz an und schiebt sie nach oben
-    func addNote(tag: NoteTag?, text: String) {
-        notes.insert(Note(date: Date(), tag: tag, text: text), at: 0)
-    }
-
-    // Komfortfunktion für Stress-Markierungen
-    func addStressMarker() {
-        addNote(tag: .stress, text: "Stress-Marke gesetzt")
     }
 
     // MARK: - Vitalitäts-Analyse

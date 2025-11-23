@@ -20,6 +20,7 @@ struct LeafyChatView: View {
     @State private var scrollProxy: ScrollViewProxy?
     @State private var isShowingArchive = false
     @Namespace private var bottomID
+    @StateObject private var keyboard = KeyboardResponder()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,6 +41,9 @@ struct LeafyChatView: View {
             scrollToBottom()
         }
         .onChange(of: viewModel.isThinking) { _, _ in
+            scrollToBottom()
+        }
+        .onChange(of: keyboard.currentHeight) { _, _ in
             scrollToBottom()
         }
         .sheet(isPresented: $isShowingArchive) {
@@ -125,6 +129,7 @@ struct LeafyChatView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
+                .padding(.bottom, keyboardAwarePadding)
             }
             .scrollDismissesKeyboard(.immediately)
             .onAppear { scrollProxy = proxy; scrollToBottom() }
@@ -138,6 +143,19 @@ struct LeafyChatView: View {
                 proxy.scrollTo(bottomID, anchor: .bottom)
             }
         }
+    }
+
+    private var keyboardAwarePadding: CGFloat {
+        // Base space for the input bar plus keyboard height to keep last message visible.
+        100 + max(0, keyboard.currentHeight - safeAreaBottomInset())
+    }
+
+    private func safeAreaBottomInset() -> CGFloat {
+#if canImport(UIKit)
+        return UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+#else
+        return 0
+#endif
     }
 }
 

@@ -24,13 +24,14 @@ struct ContentView: View {
             .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
 
             NavigationStack {
-                LogView()
+                LeafyView(appState: app)
             }
-            .tabItem { Label("Protokoll", systemImage: "note.text") }
+            .tabItem { Label("Leafy", systemImage: "leaf.fill") }
 
             SettingsView()
                 .tabItem { Label("Einstellungen", systemImage: "gearshape") }
         }
+        .tint(.rlPrimary)
     }
 }
 
