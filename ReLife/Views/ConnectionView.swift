@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Entry point that guides the user through pairing the ReLife M1 device.
 struct ConnectionView: View {
-    @EnvironmentObject private var bleManager: BLEManager
+    @EnvironmentObject private var bleManager: BluetoothManager
     @EnvironmentObject private var app: AppState
 
     var body: some View {
@@ -17,7 +17,7 @@ struct ConnectionView: View {
                 Text("Verbinde dein ReLife M1")
                     .font(.largeTitle.bold())
 
-                Text("Schalte dein ReLife-Armband ein und halte es in die Nähe deines iPhones.")
+                Text("Board einschalten (Schalter auf ON) und AKKU oder USB anschließen. Halte das BOARD nah ans iPhone, damit es auftaucht.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -55,9 +55,6 @@ struct ConnectionView: View {
 
                 Button("Überspringen") {
                     bleManager.skipToDashboard()
-                    if app.samples.isEmpty {
-                        app.generateLast10Days()
-                    }
                     app.isConnected = false
                 }
                 .font(.footnote.weight(.semibold))
@@ -73,12 +70,9 @@ struct ConnectionView: View {
             }
 
             if bleManager.didSkipConnection {
-                if app.samples.isEmpty {
-                    app.generateLast10Days()
-                }
                 app.isConnected = false
             } else {
-                app.connectAndLoadDemo()
+                app.connectDevice()
             }
         }
         .onAppear {
@@ -91,6 +85,6 @@ struct ConnectionView: View {
 
 #Preview {
     ConnectionView()
-        .environmentObject(BLEManager.shared)
+        .environmentObject(BluetoothManager.shared)
         .environmentObject(AppState())
 }

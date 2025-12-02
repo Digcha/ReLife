@@ -36,5 +36,8 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView().environmentObject(AppState())
+    ContentView()
+        .environmentObject(AppState())
+        .environmentObject(SampleStore())
+        .environmentObject(BluetoothManager.shared)
 }

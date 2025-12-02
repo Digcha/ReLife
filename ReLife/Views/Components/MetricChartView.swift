@@ -10,7 +10,7 @@ struct MetricChartView: View {
     let temperatureUnit: TemperatureUnit
     @State private var selectedDate: Date?
     @State private var selectedSample: Sample?
-    @State private var lastHapticSampleID: UUID?
+    @State private var lastHapticSampleID: String?
 
     // Nur die Daten im gewählten Zeitraum anzeigen
     private var filtered: [Sample] {

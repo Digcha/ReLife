@@ -28,7 +28,9 @@ final class LeafyChatViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.clearTodaysChat()
+            Task { @MainActor [weak self] in
+                self?.clearTodaysChat()
+            }
         }
     }
 

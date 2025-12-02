@@ -5,6 +5,7 @@ import Charts
 
 struct TrendsView: View {
     @EnvironmentObject var app: AppState
+    @EnvironmentObject var sampleStore: SampleStore
     @State private var selectedMetric: MetricType = .all
     @State private var showShare = false
     @State private var csvText: String = ""
@@ -86,68 +87,70 @@ struct TrendsView: View {
 
     var body: some View {
         let steps = weeklySteps
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text(rangeText)
-                        .font(Font.title2.bold())
-                    Spacer()
-                    // Export bereitstellen, damit die Daten geteilt werden können
-                    Button(action: { exportCSV() }) {
-                        Label("CSV exportieren", systemImage: "square.and.arrow.up")
+        return Group {
+            if sampleStore.isLoading {
+                TrendsPlaceholderView(title: "Lade Verlauf", subtitle: "Synchronisiere gespeicherte Samples …")
+            } else if app.samples.isEmpty {
+                TrendsPlaceholderView(title: "Noch keine Daten", subtitle: "Sobald dein ReLife M1 sendet, erscheinen hier Trends.")
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text(rangeText)
+                                .font(Font.title2.bold())
+                            Spacer()
+                            Button(action: { exportCSV() }) {
+                                Label("CSV exportieren", systemImage: "square.and.arrow.up")
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        if !dailyVitalities.isEmpty {
+                            VitalityTimeline(dailyVitalities: dailyVitalities, formatter: dateFormatter)
+                        }
+
+                        if !steps.isEmpty {
+                            StepsWeeklyView(
+                                dailySteps: steps,
+                                goal: stepGoal,
+                                formatter: dateFormatter,
+                                summary: stepsSummary(for: steps),
+                                averageSteps: averageSteps(for: steps)
+                            )
+                        }
+
+                        Picker("Metrik", selection: $selectedMetric) {
+                            ForEach(MetricType.allCases) { m in
+                                Text(m.rawValue).tag(m)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        if let s = stats(for: selectedMetric == .all ? .hr : selectedMetric) {
+                            HStack(spacing: 12) {
+                                StatCard(title: "Min", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.min))
+                                StatCard(title: "Ø", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.avg))
+                                StatCard(title: "Max", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.max))
+                            }
+                        }
+
+                        VStack(spacing: 16) {
+                            if selectedMetric == .all {
+                                MetricChartView(metric: .hr, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                                MetricChartView(metric: .spo2, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                                MetricChartView(metric: .skinTemp, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                                MetricChartView(metric: .steps, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                            } else {
+                                MetricChartView(metric: selectedMetric, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                            }
+                        }
                     }
-                    .buttonStyle(.bordered)
+                    .padding()
                 }
-
-                // Verlauf des ReLife-Scores visualisieren
-                if !dailyVitalities.isEmpty {
-                    VitalityTimeline(dailyVitalities: dailyVitalities, formatter: dateFormatter)
-                }
-
-                if !steps.isEmpty {
-                    StepsWeeklyView(
-                        dailySteps: steps,
-                        goal: stepGoal,
-                        formatter: dateFormatter,
-                        summary: stepsSummary(for: steps),
-                        averageSteps: averageSteps(for: steps)
-                    )
-                }
-
-                // Nutzer entscheidet, welche Kennzahl gezeigt wird
-                Picker("Metrik", selection: $selectedMetric) {
-                    ForEach(MetricType.allCases) { m in
-                        Text(m.rawValue).tag(m)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                // Statistikkarten zeigen Minimum, Durchschnitt und Maximum
-                if let s = stats(for: selectedMetric == .all ? .hr : selectedMetric) {
-                    HStack(spacing: 12) {
-                        StatCard(title: "Min", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.min))
-                        StatCard(title: "Ø", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.avg))
-                        StatCard(title: "Max", value: String(format: selectedMetric == .skinTemp ? "%.1f" : "%.0f", s.max))
-                    }
-                }
-
-                // Diagramme je nach Auswahl der Kennzahl
-                VStack(spacing: 16) {
-                    if selectedMetric == .all {
-                        MetricChartView(metric: .hr, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                        MetricChartView(metric: .spo2, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                        MetricChartView(metric: .skinTemp, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                        MetricChartView(metric: .steps, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    } else {
-                        MetricChartView(metric: selectedMetric, range: .h24, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    }
+                .sheet(isPresented: $showShare) {
+                    ActivityView(activityItems: [csvText])
                 }
             }
-            .padding()
-        }
-        // Teilt die CSV über das iOS-Teilen-Menü
-        .sheet(isPresented: $showShare) {
-            ActivityView(activityItems: [csvText])
         }
     }
 
@@ -170,6 +173,27 @@ private struct DailyVitality: Identifiable {
     let date: Date
     let relifeScore: Int
     let balanceScore: Int
+}
+
+private struct TrendsPlaceholderView: View {
+    var title: String
+    var subtitle: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .progressViewStyle(.circular)
+            Text(title)
+                .font(.title3.bold())
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
 }
 
 private struct VitalityTimeline: View {

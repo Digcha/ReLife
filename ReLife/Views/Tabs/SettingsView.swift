@@ -3,12 +3,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var app: AppState
-    @State private var showConfirmClear = false
-    @State private var showConfirmLeafyClear = false
     @State private var showHelpSheet = false
     private let leafyArchive = LeafyArchiveService()
     @State private var leafyAlert = false
-    @State private var dataAlert = false
 
     var body: some View {
         NavigationStack {
@@ -29,19 +26,32 @@ struct SettingsView: View {
                         }
                     }
                 }
-                // Demo-Daten manuell aktualisieren oder leeren
-                Section("Daten") {
-                    Button("Demo-Daten neu laden") { app.reloadDemoData() }
-                        .disabled(!app.isConnected)
-                    Button(role: .destructive) { dataAlert = true } label: {
-                        Label("Alle Daten löschen", systemImage: "trash")
+                Section("Dev Options") {
+                    Button {
+                        app.generateLast10Days()
+                        app.refreshWellnessInsights()
+                    } label: {
+                        HStack {
+                            Text("Create Demo Data")
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    Button(role: .destructive) {
+                        app.clearAllData()
+                    } label: {
+                        HStack {
+                            Text("Delete All Data")
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
                     }
                 }
                 Section("Leafy") {
                     Button(role: .destructive) {
                         leafyAlert = true
                     } label: {
-                        Label("Leafy-Chat von heute löschen", systemImage: "trash")
+                        Text("Leafy-Chat von heute löschen")
                     }
                 }
                 // Transparenter Hinweis zur Offline-Nutzung
@@ -78,10 +88,6 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Einstellungen")
-            .alert("Alle Daten wirklich löschen?", isPresented: $dataAlert) {
-                Button("Löschen", role: .destructive) { app.clearAllData() }
-                Button("Abbrechen", role: .cancel) {}
-            }
             .alert("Leafy-Chat löschen?", isPresented: $leafyAlert) {
                 Button("Löschen", role: .destructive) {
                     let today = Calendar.current.startOfDay(for: Date())

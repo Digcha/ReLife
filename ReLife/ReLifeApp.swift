@@ -10,7 +10,8 @@ import SwiftUI
 @main
 struct ReLifeApp: App {
     @StateObject private var appState = AppState()
-    @StateObject private var bleManager = BLEManager.shared
+    @StateObject private var sampleStore = SampleStore()
+    @StateObject private var bleManager = BluetoothManager.shared
 
     var body: some Scene {
         WindowGroup {
@@ -21,7 +22,12 @@ struct ReLifeApp: App {
                     ConnectionView()
                 }
             }
+            .onAppear {
+                appState.bind(to: sampleStore)
+                bleManager.configure(sampleStore: sampleStore)
+            }
             .environmentObject(appState)
+            .environmentObject(sampleStore)
             .environmentObject(bleManager)
             .preferredColorScheme(appState.colorSchemeOption.systemScheme)
         }

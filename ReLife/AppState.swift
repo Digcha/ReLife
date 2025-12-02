@@ -1,15 +1,25 @@
 import Foundation
 import SwiftUI
+import Combine
 
 // MARK: - Modelle
 // Hält die Messwerte einer Zeile aus den Demo-Daten
 struct Sample: Identifiable, Hashable {
-    let id = UUID()
+    let id: String
     let timestamp: Date
     let hr: Int
     let spo2: Int
     let skinTempC: Double
     let steps: Int
+
+    init(timestamp: Date, hr: Int, spo2: Int, skinTempC: Double, steps: Int, id: String? = nil) {
+        self.timestamp = timestamp
+        self.hr = hr
+        self.spo2 = spo2
+        self.skinTempC = skinTempC
+        self.steps = steps
+        self.id = id ?? "\(Int(timestamp.timeIntervalSince1970 * 1000))"
+    }
 }
 
 // Verdichtete Kennzahlen für das Vitalitäts-Cockpit
@@ -80,15 +90,53 @@ final class AppState: ObservableObject {
     @Published var isConnected: Bool = false
     @Published var samples: [Sample] = []
     @Published var vitality: VitalitySnapshot = .empty
+    @Published var isLoadingSamples: Bool = false
 
     @Published var temperatureUnit: TemperatureUnit = .celsius
     @Published var colorSchemeOption: ColorSchemeOption = .system
 
+    private var cancellables: Set<AnyCancellable> = []
+    private weak var sampleStore: SampleStore?
+
+    func bind(to store: SampleStore) {
+        cancellables.removeAll()
+        sampleStore = store
+
+        store.$samples
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] raw in
+                guard let self else { return }
+                let latestEpoch = Double(raw.last?.timestamp ?? 0)
+                let deltaToNow = Date().timeIntervalSince1970 - latestEpoch
+                let mapped = raw.map { sample in
+                    let shiftedDate = Date(timeIntervalSince1970: Double(sample.timestamp) + deltaToNow)
+                    return Sample(
+                        timestamp: shiftedDate,
+                        hr: Int(sample.hr),
+                        spo2: Int(sample.spo2),
+                        skinTempC: sample.temp,
+                        steps: Int(sample.normalizedSteps),
+                        id: "\(sample.timestamp)"
+                    )
+                }
+                .sorted { $0.timestamp < $1.timestamp }
+                self.samples = mapped
+                self.refreshWellnessInsights()
+            }
+            .store(in: &cancellables)
+
+        store.$isLoading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] loading in
+                self?.isLoadingSamples = loading
+            }
+            .store(in: &cancellables)
+    }
+
     // MARK: - Aktionen
-    // Verbindet die Demo und lädt die Daten einmalig
-    func connectAndLoadDemo() {
+    // Verbindet das Gerät ohne automatische Demodaten
+    func connectDevice() {
         isConnected = true
-        generateLast10Days()
     }
 
     // Erstellt Mock-Daten für die letzten zehn Tage
@@ -200,8 +248,10 @@ final class AppState: ObservableObject {
     // Setzt App-Zustand zurück und leert alles
     func clearAllData() {
         samples.removeAll()
+        sampleStore?.resetAll()
         isConnected = false
         vitality = .empty
+        BluetoothManager.shared.resetAfterDataClear()
     }
 
     // MARK: - Vitalitäts-Analyse
