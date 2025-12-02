@@ -14,15 +14,15 @@ struct ConnectScreen: View {
                 .foregroundColor(.rlSecondary)
             Text("ReLife verbinden")
                 .font(Font.largeTitle.bold())
-            Text("Tippe auf Verbinden, um Demo-Daten zu laden (10 Tage).")
+            Text("Tippe auf Verbinden, um ReLife zu koppeln.")
                 .font(Font.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            // Primäre Aktion löst Demo-Daten aus
+            // Primäre Aktion verbindet nur das Gerät
             PrimaryButton(title: "Verbinden") {
-                app.connectAndLoadDemo()
+                app.connectDevice()
             }
             .padding(.horizontal)
             // Zusätzliche Info über Sheet
@@ -34,9 +34,9 @@ struct ConnectScreen: View {
         // Zeigt erklärenden Hinweis als Sheet
         .sheet(isPresented: $showInfo) {
             VStack(spacing: 16) {
-                Text("Über ReLife (Demo)")
+                Text("Über ReLife")
                     .font(Font.title2.bold())
-                Text("Offline-Demo ohne echte Verbindungen. Beim Verbinden werden zufällige, plausible Mock-Daten für die letzten 10 Tage erzeugt.")
+                Text("Offline-Version ohne echte Verbindungen. Verbinde dein Gerät, um Live-Daten zu erhalten.")
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
                     .padding()

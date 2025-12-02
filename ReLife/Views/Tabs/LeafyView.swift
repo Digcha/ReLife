@@ -152,7 +152,10 @@ struct LeafyChatView: View {
 
     private func safeAreaBottomInset() -> CGFloat {
 #if canImport(UIKit)
-        return UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.flatMap { $0.windows }.first
+        return window?.safeAreaInsets.bottom ?? 0
 #else
         return 0
 #endif
@@ -193,7 +196,6 @@ struct LeafyMessageBubble: View {
         }
         .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
         .padding(.horizontal, 4)
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
     private var bubble: some View {

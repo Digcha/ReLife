@@ -4,7 +4,8 @@ import Charts
 // Tagesübersicht mit wichtigsten Messwerten und Aktionen
 struct TodayView: View {
     @EnvironmentObject var app: AppState
-    @EnvironmentObject var bleManager: BLEManager
+    @EnvironmentObject var bleManager: BluetoothManager
+    @EnvironmentObject var sampleStore: SampleStore
     @State private var timeWindow: TimeWindow = .h6
     private let metricColumns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
 
@@ -18,14 +19,41 @@ struct TodayView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("ReLife – Heute")
-                        .font(Font.largeTitle.bold())
-                    Text(app.vitality.recoveryPhase)
-                        .font(Font.subheadline)
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("ReLife – Heute")
+                                .font(Font.largeTitle.bold())
+                            Text(app.vitality.recoveryPhase)
+                                .font(Font.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if sampleStore.isLoading {
+                            HStack(spacing: 10) {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                Text("Daten werden geladen")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.rlCardBG)
+                            .clipShape(Capsule(style: .continuous))
+                        } else if today.isEmpty {
+                            HStack(spacing: 8) {
+                                Image(systemName: "antenna.radiowaves.left.and.right")
+                                Text("Waiting for connect")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.rlCardBG)
+                            .clipShape(Capsule(style: .continuous))
+                        }
+                    }
                 }
 
-                // Hinweis falls Nutzer noch nicht verbunden ist
                 if !bleManager.isConnected {
                     Button {
                         app.isConnected = false
@@ -60,77 +88,73 @@ struct TodayView: View {
                     .buttonStyle(.plain)
                 }
 
-                // Kacheln mit aktuellen Kennzahlen
-                LazyVGrid(columns: metricColumns, alignment: .center, spacing: 16) {
-                    MetricCardView(
-                        title: "Puls aktuell",
-                        value: latest != nil ? "\(latest!.hr)" : "–",
-                        unit: "bpm",
-                        icon: "heart.fill",
-                        sparklineData: today,
-                        color: .rlPrimary
-                    )
-                    .onTapGesture {}
+                if today.isEmpty {
+                    EmptyTodayCard(isLoading: sampleStore.isLoading, isConnected: bleManager.isConnected)
+                } else {
+                    LazyVGrid(columns: metricColumns, alignment: .center, spacing: 16) {
+                        MetricCardView(
+                            title: "Puls aktuell",
+                            value: latest != nil ? "\(latest!.hr)" : "–",
+                            unit: "bpm",
+                            icon: "heart.fill",
+                            sparklineData: today,
+                            color: .rlPrimary
+                        )
+                        .onTapGesture {}
 
-                    MetricCardView(
-                        title: "SpO₂",
-                        value: latest != nil ? "\(latest!.spo2)" : "–",
-                        unit: "%",
-                        icon: "aqi.medium",
-                        sparklineData: today,
-                        color: .rlSecondary
-                    )
-                    .onTapGesture {}
+                        MetricCardView(
+                            title: "SpO₂",
+                            value: latest != nil ? "\(latest!.spo2)" : "–",
+                            unit: "%",
+                            icon: "aqi.medium",
+                            sparklineData: today,
+                            color: .rlSecondary
+                        )
+                        .onTapGesture {}
 
-                    let temp = latest != nil ? (app.temperatureUnit == .celsius ? latest!.skinTempC : latest!.skinTempC * 9/5 + 32) : nil
-                    MetricCardView(
-                        title: "Hauttemp.",
-                        value: temp != nil ? String(format: "%.1f", temp!) : "–",
-                        unit: app.temperatureUnit.rawValue,
-                        icon: "thermometer.sun",
-                        sparklineData: today,
-                        color: .orange
-                    )
-                    .onTapGesture {}
-                }
+                        let temp = latest != nil ? (app.temperatureUnit == .celsius ? latest!.skinTempC : latest!.skinTempC * 9/5 + 32) : nil
+                        MetricCardView(
+                            title: "Hauttemp.",
+                            value: temp != nil ? String(format: "%.1f", temp!) : "–",
+                            unit: app.temperatureUnit.rawValue,
+                            icon: "thermometer.sun",
+                            sparklineData: today,
+                            color: .orange
+                        )
+                        .onTapGesture {}
+                    }
 
-                CompactStepsCard(steps: todaysSteps, goal: stepGoal)
+                    CompactStepsCard(steps: todaysSteps, goal: stepGoal)
 
-                VitalityHero(snapshot: app.vitality)
+                    VitalityHero(snapshot: app.vitality)
 
-                // Vitalitäts-Hinweise
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("ReLife Insight")
-                        .font(Font.title2.bold())
-                    InsightRow(text: app.vitality.summary, icon: "sparkles")
-                    InsightRow(text: app.vitality.highlight, icon: "leaf.circle")
-                    InsightRow(text: app.vitality.trendDescription, icon: "chart.line.uptrend.xyaxis")
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("ReLife Insight")
+                            .font(Font.title2.bold())
+                        InsightRow(text: app.vitality.summary, icon: "sparkles")
+                        InsightRow(text: app.vitality.highlight, icon: "leaf.circle")
+                        InsightRow(text: app.vitality.trendDescription, icon: "chart.line.uptrend.xyaxis")
+                    }
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
-                // Steuerung für das Zeitfenster der Charts
-                Picker("Zeitraum", selection: $timeWindow) {
-                    ForEach(TimeWindow.allCases) { w in
-                        Text(w.rawValue).tag(w)
+                    Picker("Zeitraum", selection: $timeWindow) {
+                        ForEach(TimeWindow.allCases) { w in
+                            Text(w.rawValue).tag(w)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    VStack(spacing: 16) {
+                        MetricChartView(metric: .hr, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                        MetricChartView(metric: .spo2, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                        MetricChartView(metric: .skinTemp, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
+                        MetricChartView(metric: .steps, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
                     }
                 }
-                .pickerStyle(.segmented)
-
-                VStack(spacing: 16) {
-                    MetricChartView(metric: .hr, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .spo2, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .skinTemp, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                    MetricChartView(metric: .steps, range: timeWindow, samples: app.samples, temperatureUnit: app.temperatureUnit)
-                }
-
-                // Schnellaktionen
             }
             .padding()
-        }
-        .onChange(of: app.samples) { _, _ in
-            app.refreshWellnessInsights()
         }
     }
 }
@@ -318,6 +342,55 @@ private struct CompactStepsCard: View {
                 )
         )
         .shadow(color: Color.black.opacity(0.12), radius: 14, y: 8)
+    }
+}
+
+private struct LoadingStateView: View {
+    var title: String
+    var subtitle: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .progressViewStyle(.circular)
+            Text(title)
+                .font(.title2.bold())
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+}
+
+private struct EmptyTodayCard: View {
+    var isLoading: Bool
+    var isConnected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: isLoading ? "arrow.clockwise" : "antenna.radiowaves.left.and.right")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(isLoading ? Color.rlPrimary : .secondary)
+                .rotationEffect(isLoading ? .degrees(360) : .degrees(0))
+                .animation(isLoading ? .linear(duration: 1.2).repeatForever(autoreverses: false) : .default, value: isLoading)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(isLoading ? "Daten werden geladen …" : (isConnected ? "Warte auf erste Messwerte" : "Waiting for connect"))
+                    .font(.headline)
+                Text(isConnected ? "ReLife M1 sendet gleich erste Samples." : "Tippe oben, um dein ReLife M1 zu verbinden.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color.rlCardBG)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
     }
 }
 
